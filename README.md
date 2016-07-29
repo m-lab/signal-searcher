@@ -42,7 +42,7 @@ test as a single row in a table of measured values. Each value has lots of
 attributes for the test environment and for the measured values that were
 recorded. In data mining there is the concept of a [data cube](datacube): a
 hypercube where each dimension corresponds to a piece of the key specifying a
-data value. To create a signal, you must either specify an operation for every
+data value. To create a signal, you must specify an operation for every
 key dimension in the data cube.  That is, for every dimension you must
 "transform" (apply an operation to each data value that e.g. aligns timestamps,
 transforms IPs to ASNs, or buckets data), "roll up" (combine all data along the
@@ -60,14 +60,14 @@ one-dimensional sequence of values.
 Our data is network measurement data, collected at the M-Lab measurement points
 across the Internet, and stored in [BigQuery](bigquery). The two main
 categories of data are measurements of performance and measurements of
-topology. Each test is associated with a litany of metadata regarding the
-environment in which the test was conducted. We will need to be able to join
-topology and performance metrics if we would like to perform any sort of
-tomography about where in the network any observed problems might lie. Because
-each performance data test is followed by a traceroute, the topology data can
-be considered metadata of the performance data. However, the topology data is
-also interesting in its own right and may also be studied independently of the
-performance data. 
+topology. Each test is associated with a litany of metadata (although we would
+like more metadata in BigQuery) regarding the environment in which the test was
+conducted. We will need to be able to join topology and performance metrics if
+we would like to perform any sort of tomography about where in the network any
+observed problems might lie. Because each performance data test is followed by
+a traceroute, the topology data can be considered metadata of the performance
+data. However, the topology data is also interesting in its own right and may
+also be studied independently of the performance data. 
 
 For our first version, we will restrict ourselves to studying just sources and
 destinations of traffic, leaving more complex topology-sensitive analyses for
