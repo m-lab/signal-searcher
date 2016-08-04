@@ -12,14 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Look for evidence of performance fluctuating on a 24-hour cycle.
 
-import report
-import math
+This module looks for evidence of daily periodicity in a timeseries. When a
+network has performance that varies diurnally, then that is a strong suggestion
+that the network is near overload, as network usage varies diurnally for most
+eyeball networks.  In the MLab report on interconnections, it was found that
+performance varying on a 24-hour basis was a leading indicator of severe
+congestion problems.
+"""
+
+import datetime
 import numpy
-
-
-def netblock_size(block):
-  return 1 + (block.last - block.first)
+import report
 
 # A tunable parameter to help adjust the sensitivity of this test. As the
 # required SPIKE_RATIO grows, the test becomes less vulnerable to noise, but may
@@ -32,13 +37,13 @@ SPIKE_RATIO = 2.0
 SQUELCH_THRESHOLD = .001
 
 
-def power_spike_at_24_hours(timeseries):
-  """ Looks for the presence of a 24-hour cycles in the timeseries.
+def _power_spike_at_24_hours(timeseries):
+  """Looks for the presence of a 24-hour cycles in the timeseries.
 
   Looks to see how much power there is under the frequency corresponding to
   24 hours. A relatively large amount of power there would mean that the
-  timeseries has a 24-hour component signal. 
-  
+  timeseries has a 24-hour component signal.
+
   Args:
       timeseries: The timeseries in question, one datapoint per hour, in order
 
@@ -61,33 +66,45 @@ def power_spike_at_24_hours(timeseries):
   # frequency is 1/24 (one event per 24 hours, aka "daily"), which means we
   # need to look at index:
   #   N/len(array) = 1/24
-  #   24*N = len(array)
-  #   N = len(array) / 24
+  #           24*N = len(array)
+  #              N = len(array) / 24
   day_index = int(len(timeseries) / 24.0)
   return ((power[day_index] > SQUELCH_THRESHOLD) and
           (power[day_index] / avg > SPIKE_RATIO))
 
 
 def find_problems(timeseries):
-  message_template = """%s are fluctuating on a 24-hour cycle. This is frequently a leading indicator of congestion, and suggests that at least part of the network in question is underprovisioned for its peak load"""
+  """Discover any problems relating to cyclic patterns in the data.
 
+  Args:
+      timeseries: the data read from MLab BigQuery
+
+  Returns:
+      a list of CycleProblems, possibly empty
+  """
   problems_found = []
-  for netblock in timeseries:
-    problem_size = netblock_size(netblock) * (len(timeseries) / 24.0)
-    upload = [d.upload_speed for d in timeseries[netblock]]
-    if power_spike_at_24_hours(upload):
-      problems_found.append(
-          report.Report("Cyclic performance finder", netblock, 4, problem_size,
-                        message_template % "Upload speeds"))
-    download = [d.download_speed for d in timeseries[netblock]]
-    if power_spike_at_24_hours(download):
-      problems_found.append(
-          report.Report("Cyclic performance finder", netblock, 4, problem_size,
-                        message_template % "Download speeds"))
-    rtt = [d.min_latency for d in timeseries[netblock]]
-    if power_spike_at_24_hours(rtt):
-      problems_found.append(
-          report.Report("Cyclic performance finder", netblock, 4, problem_size,
-                        message_template % "Round-trip times"))
+  for netblock, series in timeseries.iteritems():
+    duration = datetime.timedelta(hours=len(series))
+    for metric, metric_name in [('upload_speed', 'Upload speeds'),
+                                ('download_speed', 'Download speeds'),
+                                ('min_latency', 'Round-trip times')]:
+      field_index = series[0]._fields.index(metric)
+      assert field_index >= 0, 'Bad metric name %s' % metric
+      single_metric_series = [d[field_index] for d in series]
+      if _power_spike_at_24_hours(single_metric_series):
+        problems_found.append(CycleProblem(netblock, duration, metric_name))
 
   return problems_found
+
+
+class CycleProblem(report.Problem):
+  """A report for the discovery of cyclic performance characteristics."""
+  priority = 4  # all CycleProblems have the same priority for now
+
+  def __init__(self, netblock, duration, metric):
+    message = ('%s are fluctuating on a 24-hour cycle. This is frequently a '
+               'leading indicator of congestion, and suggests that at least '
+               'part of the network in question is underprovisioned for its '
+               'peak load') % metric
+    super(CycleProblem, self).__init__(netblock, duration,
+                                       CycleProblem.priority, message)

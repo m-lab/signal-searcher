@@ -269,8 +269,8 @@ performance and then run each new measurement through that same model.
 The suggested implementation order is:
 
 - [ ] Querying to get a single time series.
-- [ ] 24-hour cycles
-- [ ] Initial output reports
+- [x] 24-hour cycles
+- [x] Initial output reports
 - [ ] Performance non-degradation
 - [ ] ~~Statistical control~~ (optional step, blocked until publication)
 - [ ] Improved output reports

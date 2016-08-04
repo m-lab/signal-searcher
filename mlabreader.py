@@ -13,6 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Reads data from the MLab BigQuery instance.
+
+If you run this, we recommend having the gmail address associated with your
+query be a member of the group discuss@measurementlab.net, because then the
+resulting query charges will go to MLab instead of you.
+"""
+
 import collections
 import datetime
 
@@ -21,7 +28,7 @@ MlabDataEntry = collections.namedtuple(
 
 
 def read_timeseries(netblocks, start_time, end_time):
-  """ Reads timeseries data from MLab's BiqQuery data. """
+  """Reads timeseries data from MLab's BiqQuery data."""
   data = {}
   for block in netblocks:
     data[block] = []
