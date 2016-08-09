@@ -19,15 +19,16 @@ import cyclic
 import datetime
 import mlabreader
 import netaddr
+import random
 import unittest
 
 
-def create_flat_dataset(start, n):
+def flat_dataset(start, n):
   return [mlabreader.MlabDataEntry(
       start + datetime.timedelta(hours=i), 1000, 10000, 100) for i in range(n)]
 
 
-def create_cyclic_dataset(start, n):
+def cyclic_dataset(start, n):
   return [mlabreader.MlabDataEntry(
       start + datetime.timedelta(hours=i),
       1000 + 1000 * sin(float(i) / 24.0 * 2 * pi),
@@ -35,19 +36,18 @@ def create_cyclic_dataset(start, n):
       100 + 100 * sin(float(i + 16) / 24.0 * 2 * pi)) for i in range(n)]
 
 
+def slightly_cyclic_noisy_dataset(start, n):
+  return [mlabreader.MlabDataEntry(
+      start + datetime.timedelta(hours=i),
+      1000 + random.random() * 10,
+      10000 + 10000 * sin(float(i + 8) / 24.0 * 2 * pi) + 100 * random.random(),
+      100 + random.random() * 10) for i in range(n)]
+
+
 class TestCyclicProblemFinder(unittest.TestCase):
 
   def setUp(self):
-    start_time = datetime.datetime(2016, 1, 1, 0, 0)
-    self.flat_data = {
-        netaddr.IPNetwork('10.0.0.0/8'): create_flat_dataset(start_time, 2000)
-    }
-    self.cyclic_data = {
-        netaddr.IPNetwork('1.1.0.0/16'): create_cyclic_dataset(start_time, 2000)
-    }
-    self.short_cyclic_data = {
-        netaddr.IPNetwork('5.1.0.0/16'): create_cyclic_dataset(start_time, 100)
-    }
+    self.start_time = datetime.datetime(2016, 1, 1, 0, 0)
 
   def test_size_makes_sense(self):
     self.assertEqual(cyclic.netblock_size(netaddr.IPNetwork('10.0.0.0/32')), 1)
@@ -55,13 +55,33 @@ class TestCyclicProblemFinder(unittest.TestCase):
         cyclic.netblock_size(netaddr.IPNetwork('10.0.0.0/24')), 256)
 
   def test_flat_has_no_problems(self):
-    self.assertEqual(len(cyclic.find_problems(self.flat_data)), 0)
+    # Flat data should have no pattern
+    flat_data = {
+        netaddr.IPNetwork('10.0.0.0/8'): flat_dataset(self.start_time, 2000)
+    }
+    self.assertEqual(len(cyclic.find_problems(flat_data)), 0)
 
   def test_cyclic_data_has_many_problems(self):
-    self.assertNotEqual(len(cyclic.find_problems(self.cyclic_data)), 0)
+    # Should have one report for each attribute
+    cyclic_data = {
+        netaddr.IPNetwork('1.1.0.0/16'): cyclic_dataset(self.start_time, 2000)
+    }
+    self.assertEqual(len(cyclic.find_problems(cyclic_data)), 3)
 
   def test_short_cyclic_data_has_many_problems(self):
-    self.assertNotEqual(len(cyclic.find_problems(self.short_cyclic_data)), 0)
+    # Should have one report for each attribute
+    short_cyclic_data = {
+        netaddr.IPNetwork('5.1.0.0/16'): cyclic_dataset(self.start_time, 100)
+    }
+    self.assertEqual(len(cyclic.find_problems(short_cyclic_data)), 3)
+
+  def test_patially_cyclic_has_one_problem(self):
+    # Should have one report, because just one attribute has a 24 hour pattern
+    partially_cyclic_data = {
+        netaddr.IPNetwork('1.2.0.0/16'): slightly_cyclic_noisy_dataset(
+            self.start_time, 2000)
+    }
+    self.assertEqual(len(cyclic.find_problems(partially_cyclic_data)), 1)
 
 
 if __name__ == '__main__':

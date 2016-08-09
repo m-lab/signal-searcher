@@ -22,6 +22,7 @@ MlabDataEntry = collections.namedtuple(
 
 def read_timeseries(netblocks, start_time, end_time):
   """ Reads timeseries data from MLab's BiqQuery data. """
+  # DUMMY IMPLEMENTATION. TO BE IMPLEMENTED FOR REAL AT A LATER DATE.
   data = {}
   for block in netblocks:
     data[block] = []

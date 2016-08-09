@@ -40,10 +40,10 @@ def power_spike_at_24_hours(timeseries):
   timeseries has a 24-hour component signal. 
   
   Args:
-      timeseries: The timeseries in question, one datapoint per hour, in order
+      timeseries: A list with one datapoint per hour, in order.
 
   Returns:
-      Whether or not a strong 24-hour signal was found
+      True if a strong 24-hour signal was found, False otherwise
   """
   if len(timeseries) < 24:
     return False
@@ -61,8 +61,8 @@ def power_spike_at_24_hours(timeseries):
   # frequency is 1/24 (one event per 24 hours, aka "daily"), which means we
   # need to look at index:
   #   N/len(array) = 1/24
-  #   24*N = len(array)
-  #   N = len(array) / 24
+  #           24*N = len(array)
+  #              N = len(array) / 24
   day_index = int(len(timeseries) / 24.0)
   return ((power[day_index] > SQUELCH_THRESHOLD) and
           (power[day_index] / avg > SPIKE_RATIO))
@@ -73,6 +73,11 @@ def find_problems(timeseries):
 
   problems_found = []
   for netblock in timeseries:
+    # The size of a problem is equal to the number of IP addresses affected
+    # times the time range over which that effect happened.  This way a severe
+    # problem for a few IP addresses that happened for a long time can be
+    # quantitatively compared with a mild problem over a lot of IP address for
+    # a shorter time.
     problem_size = netblock_size(netblock) * (len(timeseries) / 24.0)
     upload = [d.upload_speed for d in timeseries[netblock]]
     if power_spike_at_24_hours(upload):
