@@ -13,14 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from math import sin, pi
-
-import cyclic
 import datetime
-import mlabreader
-import netaddr
+from math import pi
+from math import sin
 import random
 import unittest
+
+import cyclic
+import mlabreader
+import netaddr
+
 
 
 def flat_dataset(start, n):
@@ -48,11 +50,6 @@ class TestCyclicProblemFinder(unittest.TestCase):
 
   def setUp(self):
     self.start_time = datetime.datetime(2016, 1, 1, 0, 0)
-
-  def test_size_makes_sense(self):
-    self.assertEqual(cyclic.netblock_size(netaddr.IPNetwork('10.0.0.0/32')), 1)
-    self.assertEqual(
-        cyclic.netblock_size(netaddr.IPNetwork('10.0.0.0/24')), 256)
 
   def test_flat_has_no_problems(self):
     # Flat data should have no pattern
