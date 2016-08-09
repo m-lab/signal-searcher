@@ -16,12 +16,13 @@
 import datetime
 from math import pi
 from math import sin
+import random
 import unittest
+
 import cyclic
 import mlabreader
 import netaddr
-import random
-import unittest
+
 
 
 def flat_dataset(start, n):
