@@ -24,7 +24,6 @@ import mlabreader
 import netaddr
 
 
-
 def flat_dataset(start, n):
   return [mlabreader.MlabDataEntry(
       start + datetime.timedelta(hours=i), 1000, 10000, 100) for i in range(n)]

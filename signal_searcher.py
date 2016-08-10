@@ -24,6 +24,7 @@ For more information, try:
 
 import argparse
 import datetime
+import sys
 
 import cyclic
 import dateparser
@@ -46,16 +47,31 @@ def parse_date(s):
       A datetime.datetime object
 
   Raises:
-      RuntimeError: on unparseable input
+      ValueError: on unparseable input
   """
   d = dateparser.parse(s)
   if d is None:
-    raise RuntimeError("can't parse %s into a date" % s)
+    raise ValueError("can't parse %s into a date" % s)
   else:
     return d
 
 
-def main():
+def parse_command_line(cli_args=None):
+  """Parses command-line arguments.
+
+  Prints help and exits if the user asks for that, and prints an error message
+  and exits if the command-line arguments were bad in some way.  Otherwise,
+  returns a tuple of the values of the parsed arguments.
+
+  Args:
+      cli_args: Optional array of strings to parse. Uses sys.argv by default.
+
+  Returns:
+      A tuple of (start_time, end_time, netblocks)
+  """
+  if cli_args is None:
+    cli_args = sys.argv[1:]
+
   # Parse the command line
   parser = argparse.ArgumentParser(
       description='Analyze mLab data to find interesting and important signals')
@@ -81,11 +97,20 @@ def main():
       nargs=1,
       help='The end of the time period to search '
       '(defaults to the current time)')
-  args = parser.parse_args()
+  try:
+    args = parser.parse_args(cli_args)
+  except (netaddr.core.AddrFormatError, ValueError) as e:
+    parser.error(e.message)
+  return (args.start[0], args.end[0], args.netblocks)
+
+
+def main():
+  # Parse the command-line
+  start, end, netblocks = parse_command_line()
 
   # Read the data
-  timeseries = mlabreader.read_timeseries(args.netblocks, args.start[0],
-                                          args.end[0])
+  timeseries = mlabreader.read_timeseries(netblocks, start, end)
+
   # Look for problems
   cycle_problems = cyclic.find_problems(timeseries)
 
