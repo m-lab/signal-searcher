@@ -80,7 +80,7 @@ class TestCyclicProblemFinder(unittest.TestCase):
     self.assertEqual(len(cyclic.find_problems(partially_cyclic_data)), 1)
 
   def test_too_short_data_never_has_problems(self):
-    # Should have one report for each attribute
+    # Should have no reports, despite the cycles, because it is too short.
     cyclic_data = {
         netaddr.IPNetwork('1.1.0.0/16'): cyclic_dataset(self.start_time, 23)
     }
