@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/pboothe/signal-searcher.svg?branch=master)](https://travis-ci.org/pboothe/signal-searcher)
+[![Coverage Status](https://coveralls.io/repos/pboothe/signal-searcher/badge.svg?branch=master&service=github)](https://coveralls.io/github/pboothe/signal-searcher?branch=master)
+
 
 # Requirements
 
