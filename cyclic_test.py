@@ -41,8 +41,8 @@ def slightly_cyclic_noisy_dataset(start, n):
   return [mlabreader.MlabDataEntry(
       start + datetime.timedelta(hours=i),
       1000 + random.random() * 10,
-      10000 + 10000 * sin(float(i + 8) / 24.0 * 2 * pi) + 100 * random.random(),
-      100 + random.random() * 10) for i in range(n)]
+      10000 + 10000 * sin(float(i + 8) / 24.0 * 2 * pi) + 10 * random.random(),
+      100 + random.random()) for i in range(n)]
 
 
 class TestCyclicProblemFinder(unittest.TestCase):
@@ -71,13 +71,20 @@ class TestCyclicProblemFinder(unittest.TestCase):
     }
     self.assertEqual(len(cyclic.find_problems(short_cyclic_data)), 3)
 
-  def test_patially_cyclic_has_one_problem(self):
+  def test_partially_cyclic_has_one_problem(self):
     # Should have one report, because just one attribute has a 24 hour pattern
     partially_cyclic_data = {
         netaddr.IPNetwork('1.2.0.0/16'): slightly_cyclic_noisy_dataset(
             self.start_time, 2000)
     }
     self.assertEqual(len(cyclic.find_problems(partially_cyclic_data)), 1)
+
+  def test_too_short_data_never_has_problems(self):
+    # Should have one report for each attribute
+    cyclic_data = {
+        netaddr.IPNetwork('1.1.0.0/16'): cyclic_dataset(self.start_time, 23)
+    }
+    self.assertEqual(len(cyclic.find_problems(cyclic_data)), 0)
 
 
 if __name__ == '__main__':
