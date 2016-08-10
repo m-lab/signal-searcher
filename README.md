@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pboothe/signal-searcher.svg?branch=master)](https://travis-ci.org/pboothe/signal-searcher)
+
 # Requirements
 
 **Signal Searcher attempts to find interesting and important signals in MLab's Internet
