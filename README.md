@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/pboothe/signal-searcher.svg?branch=master)](https://travis-ci.org/pboothe/signal-searcher)
-[![Coverage Status](https://coveralls.io/repos/github/pboothe/signal-searcher/badge.svg?branch=master)](https://coveralls.io/github/pboothe/signal-searcher?branch=master)
+[![Build Status](https://travis-ci.org/m-lab/signal-searcher.svg?branch=master)](https://travis-ci.org/m-lab/signal-searcher)
+[![Coverage Status](https://coveralls.io/repos/github/m-lab/signal-searcher/badge.svg?branch=master)](https://coveralls.io/github/m-lab/signal-searcher?branch=master)
 
 
 # Requirements
