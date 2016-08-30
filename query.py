@@ -223,20 +223,25 @@ class SubQueryGenerator(object):
         return ',\n\t'.join(clauses)
 
 def build_metric_median_query(start_time, end_time, client_ip_blocks):
-    built_query_format = ('SELECT\n\t{median_select}\n'
-                          'FROM\n\t{subquery_tables}')
+    built_query_format = ('SELECT\n\t'
+                            'timestamp\n\t'
+                            '{median_select}\n'
+                          'FROM\n\t'
+                            '{subquery_tables}\n'
+                          'GROUP BY\n\t'
+                            'timestamp')
 
     select_clauses = []
     subqueries = []
     for m in METRICS:
         subquery = SubQueryGenerator(m, start_time, end_time, client_ip_blocks)
-        subqueries.append(subquery.query)
+        subqueries.append('(%s)' % subquery.query)
 
         if m == 'minimum_rtt':
             metric_with_unit = m+'_ms'
         else:
             metric_with_unit = m+'_mbps'
-        select_clauses.append('NTH( 51, QUANTILES(%s, 101)) AS %s' % (m, metric_with_unit))
+        select_clauses.append('NTH( 51, QUANTILES({metric}, 101)) AS {metric}'.format(metric=metric_with_unit))
 
     join_select_clauses = ',\n\t'.join(select_clauses)
     join_subqueries = ',\n\t'.join(subqueries)

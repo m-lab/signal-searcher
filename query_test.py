@@ -228,7 +228,7 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
   def test_build_valid_median_query(self):
     actual = query.build_metric_median_query(self.start_time, self.end_time, self.client_ip_blocks)
     expected_download_subquery = (
-      'SELECT\n\t'
+      '(SELECT\n\t'
       'web100_log_entry.log_time AS timestamp,\n\t'
       '8 * (web100_log_entry.snap.HCThruOctetsAcked /\n\t\t'
       '(web100_log_entry.snap.SndLimTimeRwin +\n\t\t'
@@ -251,11 +251,11 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
         ' AND (web100_log_entry.log_time < 1391212800)'
       '\n\tAND ('
         'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 5 AND 10 OR\n\t\t'
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)),'
     )
     expected_upload_subquery = (
-      ',\n\t'
-      'SELECT\n\t'
+      '\n\t'
+      '(SELECT\n\t'
       'web100_log_entry.log_time AS timestamp,\n\t'
       '8 * (web100_log_entry.snap.HCThruOctetsReceived /\n\t\t'
       ' web100_log_entry.snap.Duration) AS upload_mbps\n'
@@ -272,11 +272,11 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
         ' AND (web100_log_entry.log_time < 1391212800)'
       '\n\tAND ('
         'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 5 AND 10 OR\n\t\t'
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)),'
       )
     expected_rtt_subquery = (
-      ',\n\t'
-      'SELECT\n\t'
+      '\n\t'
+      '(SELECT\n\t'
       'web100_log_entry.log_time AS timestamp,\n\t'
       'web100_log_entry.snap.MinRTT AS minimum_rtt_ms\n'
       'FROM\n\tplx.google:m_lab.ndt.all\n'
@@ -296,18 +296,21 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
         ' AND (web100_log_entry.log_time < 1391212800)'
       '\n\tAND ('
         'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 5 AND 10 OR\n\t\t'
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80))'
     )
 
     expected = (
       'SELECT\n\t'
-      'NTH( 51, QUANTILES(download, 101)) AS download_mbps,\n\t'
-      'NTH( 51, QUANTILES(upload, 101)) AS upload_mbps,\n\t'
-      'NTH( 51, QUANTILES(minimum_rtt, 101)) AS minimum_rtt_ms\n'
+      'timestamp\n\t'
+      'NTH( 51, QUANTILES(download_mbps, 101)) AS download_mbps,\n\t'
+      'NTH( 51, QUANTILES(upload_mbps, 101)) AS upload_mbps,\n\t'
+      'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS minimum_rtt_ms\n'
       'FROM\n\t'
       '{download}'
       '{upload}'
-      '{min_rtt}'
+      '{min_rtt}\n'
+      'GROUP BY\n\t'
+      'timestamp'
       ).format(download=expected_download_subquery, upload=expected_upload_subquery, min_rtt=expected_rtt_subquery)
 
     self.assertEqual(expected, actual)
