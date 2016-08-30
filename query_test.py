@@ -301,17 +301,16 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
 
     expected = (
       'SELECT\n\t'
-      'timestamp\n\t'
-      'NTH( 51, QUANTILES(download_mbps, 101)) AS download_mbps,\n\t'
-      'NTH( 51, QUANTILES(upload_mbps, 101)) AS upload_mbps,\n\t'
-      'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS minimum_rtt_ms\n'
+      'NTH( 51, QUANTILES(download_mbps, 101)) AS median_download_mbps,\n\t'
+      'NTH( 51, QUANTILES(upload_mbps, 101)) AS median_upload_mbps,\n\t'
+      'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS median_minimum_rtt_ms\n'
       'FROM\n\t'
       '{download}'
       '{upload}'
-      '{min_rtt}\n'
-      'GROUP BY\n\t'
-      'timestamp'
+      '{min_rtt}'
       ).format(download=expected_download_subquery, upload=expected_upload_subquery, min_rtt=expected_rtt_subquery)
+
+    print expected
 
     self.assertEqual(expected, actual)
 
