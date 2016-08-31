@@ -225,8 +225,8 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
     self.end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
     self.client_ip_blocks = [(5, 10), (35, 80)]
 
-  def test_build_valid_median_query(self):
-    actual = query.build_metric_median_query(self.start_time, self.end_time, self.client_ip_blocks)
+  def test_build_valid_download_median_query(self):
+    actual = query.build_metric_median_query('download', self.start_time, self.end_time, self.client_ip_blocks)
     expected_download_subquery = (
       '(SELECT\n\t'
       'web100_log_entry.log_time AS timestamp,\n\t'
@@ -251,10 +251,21 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
         ' AND (web100_log_entry.log_time < 1391212800)'
       '\n\tAND ('
         'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 5 AND 10 OR\n\t\t'
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)),'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80))'
     )
+
+    expected = (
+      'SELECT\n\t'
+      'NTH( 51, QUANTILES(download_mbps, 101)) AS median_download_mbps\n'
+      'FROM\n\t'
+      '{subquery}'
+    ).format(subquery=expected_download_subquery)
+
+    self.assertEqual(expected, actual)
+
+  def test_build_valid_upload_median_query(self):
+    actual = query.build_metric_median_query('upload', self.start_time, self.end_time, self.client_ip_blocks)
     expected_upload_subquery = (
-      '\n\t'
       '(SELECT\n\t'
       'web100_log_entry.log_time AS timestamp,\n\t'
       '8 * (web100_log_entry.snap.HCThruOctetsReceived /\n\t\t'
@@ -272,10 +283,21 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
         ' AND (web100_log_entry.log_time < 1391212800)'
       '\n\tAND ('
         'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 5 AND 10 OR\n\t\t'
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80)),'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 35 AND 80))'
       )
+
+    expected = (
+      'SELECT\n\t'
+      'NTH( 51, QUANTILES(upload_mbps, 101)) AS median_upload_mbps\n'
+      'FROM\n\t'
+      '{subquery}'
+    ).format(subquery=expected_upload_subquery)
+
+    self.assertEqual(expected, actual)
+
+  def test_build_valid_rtt_median_query(self):
+    actual = query.build_metric_median_query('minimum_rtt', self.start_time, self.end_time, self.client_ip_blocks)
     expected_rtt_subquery = (
-      '\n\t'
       '(SELECT\n\t'
       'web100_log_entry.log_time AS timestamp,\n\t'
       'web100_log_entry.snap.MinRTT AS minimum_rtt_ms\n'
@@ -301,19 +323,12 @@ class BuildMetricMedianQueryTest(unittest.TestCase):
 
     expected = (
       'SELECT\n\t'
-      'NTH( 51, QUANTILES(download_mbps, 101)) AS median_download_mbps,\n\t'
-      'NTH( 51, QUANTILES(upload_mbps, 101)) AS median_upload_mbps,\n\t'
       'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS median_minimum_rtt_ms\n'
       'FROM\n\t'
-      '{download}'
-      '{upload}'
-      '{min_rtt}'
-      ).format(download=expected_download_subquery, upload=expected_upload_subquery, min_rtt=expected_rtt_subquery)
-
-    print expected
+      '{subquery}'
+    ).format(subquery=expected_rtt_subquery)
 
     self.assertEqual(expected, actual)
-
 
 if __name__ == '__main__':
   unittest.main()

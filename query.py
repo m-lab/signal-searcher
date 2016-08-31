@@ -222,25 +222,31 @@ class SubQueryGenerator(object):
         clauses.append(metric_to_clause[metric])
         return ',\n\t'.join(clauses)
 
-def build_metric_median_query(start_time, end_time, client_ip_blocks):
+def build_metric_median_query(metric, start_time, end_time, client_ip_blocks):
+    """Builds a query to calculate the median of a metric by time and ip block.
+
+    Args:
+        metric: One of upload, download and minimum rtt.
+        start_time: Datetime instance representing beginning of range.
+        end_time: Datetime instance representing end of range.
+        client_ip_blocks: List of tuples of ip blocks.
+
+    Returns:
+        String representation of a query.
+    """
     built_query_format = ('SELECT\n\t{median_select}\n'
-                          'FROM\n\t{subquery_tables}')
+                          'FROM\n\t{subquery_table}')
 
-    select_clauses = []
-    subqueries = []
-    for m in METRICS:
-        subquery = SubQueryGenerator(m, start_time, end_time, client_ip_blocks)
-        subqueries.append('(%s)' % subquery.query)
+    subquery = SubQueryGenerator(metric, start_time, end_time, client_ip_blocks)
+    subquery_string = '(%s)' % subquery.query
 
-        if m == 'minimum_rtt':
-            metric_with_unit = m+'_ms'
-        else:
-            metric_with_unit = m+'_mbps'
-        select_clauses.append('NTH( 51, QUANTILES({metric}, 101)) AS median_{metric}'.format(metric=metric_with_unit))
+    if metric == 'minimum_rtt':
+        metric_with_unit = metric+'_ms'
+    else:
+        metric_with_unit = metric+'_mbps'
+    select = 'NTH( 51, QUANTILES({m}, 101)) AS median_{m}'.format(m=metric_with_unit)
 
-    join_select_clauses = ',\n\t'.join(select_clauses)
-    join_subqueries = ',\n\t'.join(subqueries)
-    return built_query_format.format(median_select=join_select_clauses, subquery_tables=join_subqueries)
+    return built_query_format.format(median_select=select, subquery_table=subquery_string)
 
 
 
