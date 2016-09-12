@@ -272,17 +272,21 @@ performance and then run each new measurement through that same model.
 
 The suggested implementation order is:
 
-- [ ] Querying to get a single time series.
-- [x] 24-hour cycles
-- [x] Initial output reports
-- [ ] Performance non-degradation
-- [ ] ~~Statistical control~~ (optional step, blocked until publication)
-- [ ] Improved output reports
-- [ ] Querying to get a performance distribution
-- [ ] Equivalent performance within a metro
-- [ ] Querying to get everything
-- [ ] TensorFlow prediction model
-- [ ] Cleaned up output reports
+1. First phase: reproduce MLab Interconnection report analyses
+  - [ ] Querying to get a single time series. (half done)
+  - [x] 24-hour cycles
+  - [x] Initial output reports
+2. Second phase: reproduce the more-understandable (but less sensitive) analyses of performance degradation
+  - [ ] Performance non-degradation
+  - [ ] ~~Statistical control~~ (optional step, blocked until publication)
+  - [ ] Improved output reports
+3. Third phase: end-to-end verification of neutrality of interconnections within a metro
+  - [ ] Querying to get a performance distribution
+  - [ ] Equivalent performance within a metro
+4. Fourth phase: using machine learning to find surprises
+  - [ ] Querying to get everything
+  - [ ] TensorFlow prediction model
+  - [ ] Cleaned up output reports
 
 Note that once querying to get a time-series works, implementing the
 time-series tests can proceed in parallel.  Also, output reports should be
