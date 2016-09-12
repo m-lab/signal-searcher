@@ -58,10 +58,9 @@ def _power_spike_at_24_hours(timeseries):
   # Square the result to get the power curve
   power = [abs(x)**2 for x in spectrum]
   # Compare the value at the index corresponding to 24 hours to the average
-  # value. If it is more than SPIKE_SIZE times the average value, then we will
-  # count that as a a spike. We calculate the average after removing the DC
-  # component of the signal.
-  avg = numpy.average(power[1:])
+  # value. If it is more than SPIKE_RATIO times the average value, then we will
+  # count that as a a spike.
+  avg = numpy.average(power)
   # Frequency at index N is N/len(array).  We want to find the power when the
   # frequency is 1/24 (one event per 24 hours, aka "daily"), which means we
   # need to look at index:
