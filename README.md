@@ -278,7 +278,7 @@ The suggested implementation order is:
   - [x] Initial output reports
 2. Second phase: reproduce the more-understandable (but less sensitive) analyses of performance degradation
   - [x] Performance non-degradation
-  - [x] Ensure [Statistical control][statisticalcontrol]
+  - [ ] Ensure [Statistical control][statisticalcontrol]
   - [ ] Improved output reports
 3. Third phase: end-to-end verification of neutrality of interconnections within a metro
   - [ ] Querying to get a performance distribution
