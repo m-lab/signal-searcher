@@ -80,18 +80,17 @@ def _recursive_performance_degradation(netblock, timeseries, metric,
     chunk_duration = datetime.timedelta(hours=(chunk_end - chunk_start))
     # Don't investigate performance degradation at a timescale finer than a
     # day. Too much noise and too many transient network conditions.
-    if chunk_duration.days < 1:
-      continue
-    chunk = timeseries[chunk_start:chunk_end]
-    slope = _find_slope(chunk)
-    if _bad_slope(slope, metric):
-      yield PerformanceDegradationProblem(netblock, chunk_duration, metric_name)
-    else:
-      for problem in _recursive_performance_degradation(netblock, timeseries,
-                                                        metric, metric_name,
-                                                        time_periods,
-                                                        chunk_start, chunk_end):
-        yield problem
+    if chunk_duration.days > 1:
+      chunk = timeseries[chunk_start:chunk_end]
+      slope = _find_slope(chunk)
+      if _bad_slope(slope, metric):
+        yield PerformanceDegradationProblem(netblock, chunk_duration, metric_name)
+      else:
+        for problem in _recursive_performance_degradation(netblock, timeseries,
+                                                          metric, metric_name,
+                                                          time_periods,
+                                                          chunk_start, chunk_end):
+          yield problem
     period_index += 1
 
 
@@ -114,6 +113,9 @@ def _performance_degradation(netblock, timeseries, duration, metric,
   Yields:
       all the PerformanceDegradationProblems it finds
   """
+  # Defense against too-small datasets that can yield only noise
+  if duration < datetime.timedelta(days=1):
+    return
   # Fit the data to a line, and then see if the line's slope is good or bad.
   slope = _find_slope(timeseries)
   if _bad_slope(slope, metric):
@@ -150,8 +152,8 @@ def find_problems(timeseries):
       assert field_index >= 0, 'Bad metric name %s' % metric
       single_metric_series = [d[field_index] for d in series]
       problems_found.extend(
-          _performance_degradation(netblock, single_metric_series, duration,
-                                   metric, metric_name))
+          list(_performance_degradation(netblock, single_metric_series, duration,
+                                   metric, metric_name)))
   return problems_found
 
 
