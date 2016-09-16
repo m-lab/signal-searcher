@@ -277,8 +277,8 @@ The suggested implementation order is:
   - [x] 24-hour cycles
   - [x] Initial output reports
 2. Second phase: reproduce the more-understandable (but less sensitive) analyses of performance degradation
-  - [ ] Performance non-degradation
-  - [ ] ~~Statistical control~~ (optional step, blocked until publication)
+  - [x] Performance non-degradation
+  - [ ] Ensure [Statistical control][statisticalcontrol]
   - [ ] Improved output reports
 3. Third phase: end-to-end verification of neutrality of interconnections within a metro
   - [ ] Querying to get a performance distribution
@@ -320,3 +320,4 @@ up and made into something we are proud of once all tests are working.
 [mlab]: //www.measurementlab.net
 [datacube]: https://en.wikipedia.org/wiki/OLAP_cube
 [bigquery]: https://bigquery.cloud.google.com
+[statisticalcontrol]: https://www.measurementlab.net/publications/CUSUMAnomalyDetection.pdf
