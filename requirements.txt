@@ -1,4 +1,5 @@
 dateparser
+google-api-python-client
 httplib2
 netaddr
 numpy
