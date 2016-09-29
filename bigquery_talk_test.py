@@ -173,7 +173,6 @@ class BigQueryCallQueryIntegrationTest(unittest.TestCase):
 
     query_string = query.build_metric_median_query('upload', self.start_time, self.end_time, self.client_ip_blocks)
     call_handler = self.bq_call.run_asynchronous_query(query_string)
-    data = call_handler.wait_for_query_results()
 
     expected_job_body = {
       'configuration':{
@@ -192,7 +191,6 @@ class BigQueryCallQueryIntegrationTest(unittest.TestCase):
 
     query_string = query.build_metric_median_query('download', self.start_time, self.end_time, self.client_ip_blocks)
     call_handler = self.bq_call.run_asynchronous_query(query_string)
-    data = call_handler.wait_for_query_results()
 
     expected_job_body = {
       'configuration':{
@@ -211,7 +209,6 @@ class BigQueryCallQueryIntegrationTest(unittest.TestCase):
 
     query_string = query.build_metric_median_query('minimum_rtt', self.start_time, self.end_time, self.client_ip_blocks)
     call_handler = self.bq_call.run_asynchronous_query(query_string)
-    data = call_handler.wait_for_query_results()
 
     expected_job_body = {
       'configuration':{
