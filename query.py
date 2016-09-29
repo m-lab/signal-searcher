@@ -265,8 +265,3 @@ def build_metric_median_query(metric, start_time, end_time, client_ip_blocks):
     select = 'NTH( 51, QUANTILES({m}, 101)) AS median_{m}'.format(m=metric_with_unit)
 
     return built_query_format.format(median_select=select, subquery_table=subquery_string)
-
-
-
-
-

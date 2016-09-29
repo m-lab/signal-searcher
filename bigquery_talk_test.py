@@ -15,8 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import bigquery_talk
+import query
 
+import datetime
 import mock
+import netaddr
+import pytz
 import unittest
 
 import apiclient
@@ -150,6 +154,72 @@ class BigQueryCallHandlerTest(unittest.TestCase):
 
     self.assertEqual(self.mock_get_status.call_count, 2)
     collect_patch.assert_called_once_with()
+
+class BigQueryCallQueryIntegrationTest(unittest.TestCase):
+
+  def setUp(self):
+    self.start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
+    self.end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
+    self.client_ip_blocks = [(netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('5.0.0.0/16')), (netaddr.IPNetwork('10.0.0.0/16'), netaddr.IPNetwork('15.0.0.0/16'))]
+    self.mock_auth_service = mock.Mock(name='auth_service')
+    self.bq_call = bigquery_talk.BigQueryCall(self.mock_auth_service, 'mock_project_id')
+
+  def test_query_BigQuery_with_the_expected_upload_query_string(self):
+    mock_request = mock.Mock()
+    mock_request.execute.return_value = {'jobReference': {'jobId': 'mock_job_id'}}
+    mock_job = mock.Mock()
+    mock_job.insert.return_value = mock_request
+    self.mock_auth_service.jobs.return_value = mock_job
+
+    query_string = query.build_metric_median_query('upload', self.start_time, self.end_time, self.client_ip_blocks)
+    call_handler = self.bq_call.run_asynchronous_query(query_string)
+    data = call_handler.wait_for_query_results()
+
+    expected_job_body = {
+      'configuration':{
+          'query': {
+              'kind': 'bigquery#queryRequest',
+              'query': query_string,
+              'timeoutMS': 15000 }}}
+    mock_job.insert.assert_called_with(body=expected_job_body, projectId='mock_project_id')
+
+  def test_query_BigQuery_with_the_expected_download_query_string(self):
+    mock_request = mock.Mock()
+    mock_request.execute.return_value = {'jobReference': {'jobId': 'mock_job_id'}}
+    mock_job = mock.Mock()
+    mock_job.insert.return_value = mock_request
+    self.mock_auth_service.jobs.return_value = mock_job
+
+    query_string = query.build_metric_median_query('download', self.start_time, self.end_time, self.client_ip_blocks)
+    call_handler = self.bq_call.run_asynchronous_query(query_string)
+    data = call_handler.wait_for_query_results()
+
+    expected_job_body = {
+      'configuration':{
+          'query': {
+              'kind': 'bigquery#queryRequest',
+              'query': query_string,
+              'timeoutMS': 15000 }}}
+    mock_job.insert.assert_called_with(body=expected_job_body, projectId='mock_project_id')
+
+  def test_query_BigQuery_with_the_expected_minimum_rtt_query_string(self):
+    mock_request = mock.Mock()
+    mock_request.execute.return_value = {'jobReference': {'jobId': 'mock_job_id'}}
+    mock_job = mock.Mock()
+    mock_job.insert.return_value = mock_request
+    self.mock_auth_service.jobs.return_value = mock_job
+
+    query_string = query.build_metric_median_query('minimum_rtt', self.start_time, self.end_time, self.client_ip_blocks)
+    call_handler = self.bq_call.run_asynchronous_query(query_string)
+    data = call_handler.wait_for_query_results()
+
+    expected_job_body = {
+      'configuration':{
+          'query': {
+              'kind': 'bigquery#queryRequest',
+              'query': query_string,
+              'timeoutMS': 15000 }}}
+    mock_job.insert.assert_called_with(body=expected_job_body, projectId='mock_project_id')
 
 
 if __name__ == '__main__':

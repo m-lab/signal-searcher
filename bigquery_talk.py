@@ -161,8 +161,6 @@ class BigQueryCall(object):
                         'timeoutMS': timeout_ms }}}
 
             query_request = self._authenticated_service.jobs().insert(projectId=self._project_id, body=job_query_body)
-
-
             query_response = query_request.execute()
             job_id = query_response['jobReference']['jobId']
 
@@ -214,7 +212,6 @@ class BigQueryCallHandler(object):
                 elif status == 'DONE':
                     logger.info('Query status complete.')
                     return self._collect_query_results()
-                    break
                 else:
                     raise Exception('UnknownBigQueryResponse')
         return None
