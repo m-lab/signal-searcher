@@ -18,6 +18,7 @@
 
 import datetime
 import logging
+import netaddr
 import pytz
 
 METRICS = ['download', 'upload', 'minimum_rtt']
@@ -31,6 +32,17 @@ def _seconds_to_microseconds(seconds):
 
 def _is_server_to_client_metric(metric):
     return metric in ('download', 'minimum_rtt')
+
+def ipnetwork_to_iprange(ipnetwork):
+    """Returns an ip range for a given netaddr.IPNetwork instance."""
+    addr_tuple = ipnetwork.ip.words
+    prefix_i = ipnetwork.prefixlen/8
+    last_ip = ['255']*4
+
+    for i in range(0, prefix_i):
+        last_ip[i] = str(addr_tuple[i])
+    return (ipnetwork.ip, netaddr.IPAddress('.'.join(last_ip)))
+
 
 class QueryConditionals(object):
     """Generates a dictionary of conditional statements for building a query.
@@ -69,9 +81,9 @@ class QueryConditionals(object):
         Args:
             start_time: datetime.datetime instance of starting time range.
             end_time: datetime.datetime instance of end of time range.
-            client_ip_blocks: List of tuples of netaddr.IPNetwork objects.
+            client_ip_blocks: List of netaddr.IPNetwork objects.
                 ex:
-                    [(IPNetwork('1.2.0.0/16'), IPNetwork('5.1.0.0/16'))]
+                    [netaddr.IPNetwork('1.2.0.0/16'), netaddr.IPNetwork('5.1.0.0/16')]
         """
         self._conditional_dict = {}
         # Must have completed the TCP three-way handshake.
@@ -101,6 +113,11 @@ class QueryConditionals(object):
         self._conditional_dict['log_time'] = new_statement
 
     def _add_client_ip_blocks_conditional(self, client_ip_blocks):
+        """Adds the client ip block clauses to self._conditional_dict.
+
+        Args:
+            client_ip_blocks: List of netaddr.IPNetwork instances.
+        """
         # remove duplicates, warn if any are found
         unique_client_ip_blocks = list(set(client_ip_blocks))
         if len(client_ip_blocks) != len(unique_client_ip_blocks):
@@ -111,12 +128,13 @@ class QueryConditionals(object):
                                          key=lambda block: block[0])
 
         self._conditional_dict['client_ip_blocks'] = []
-        for start_addr, end_addr in client_ip_blocks:
+        for block in client_ip_blocks:
+            start_ip, end_ip = ipnetwork_to_iprange(block)
             new_statement = (
                 'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
-                '{start_addr} AND {end_addr}').format(
-                    start_addr=str(start_addr),
-                    end_addr=str(end_addr))
+                'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')').format(
+                    start_addr=start_ip,
+                    end_addr=end_ip)
             self._conditional_dict['client_ip_blocks'].append(new_statement)
 
     def _create_metric_specific_dict(self, metric):

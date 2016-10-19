@@ -33,7 +33,7 @@ class QueryConditionalsTest(NormalizedStringTestCase):
   def setUp(self):
     start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
     end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-    client_ip_blocks = [(netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('5.0.0.0/16')), (netaddr.IPNetwork('10.0.0.0/16'), netaddr.IPNetwork('15.0.0.0/16'))]
+    client_ip_blocks = [netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('10.0.0.0/16')]
     self.conditional = query.QueryConditionals(start_time, end_time, client_ip_blocks)
 
     self.generate_expected_nonmetric_dict(start_time, end_time, client_ip_blocks)
@@ -45,17 +45,19 @@ class QueryConditionalsTest(NormalizedStringTestCase):
     start_time_unix = self.datetime_to_seconds(start_time)
     end_time_unix = self.datetime_to_seconds(end_time)
 
+    ip_range_0= query.ipnetwork_to_iprange(client_ip_blocks[0])
     expected_client_ip_blocks_0 = (
       'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
-      '{start_addr} AND {end_addr}').format(
-          start_addr=str(client_ip_blocks[0][0]),
-          end_addr=str(client_ip_blocks[0][1]))
+      'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')'.format(
+          start_addr=str(ip_range_0[0]),
+          end_addr=str(ip_range_0[1])))
 
+    ip_range_1= query.ipnetwork_to_iprange(client_ip_blocks[1])
     expected_client_ip_blocks_1 = (
       'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
-      '{start_addr} AND {end_addr}').format(
-          start_addr=str(client_ip_blocks[1][0]),
-          end_addr=str(client_ip_blocks[1][1]))
+      'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')'.format(
+          start_addr=str(ip_range_1[0]),
+          end_addr=str(ip_range_1[1])))
 
     expected_complete_tcp = (
       '(web100_log_entry.snap.State = 1 '
@@ -137,7 +139,7 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
   def setUp(self):
     self.start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
     self.end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-    self.client_ip_blocks = [(netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('5.0.0.0/16')), (netaddr.IPNetwork('10.0.0.0/16'), netaddr.IPNetwork('15.0.0.0/16'))]
+    self.client_ip_blocks = [netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('10.0.0.0/16')]
 
   def test_download_subquery_is_correct(self):
     subquery = query.SubQueryGenerator('download', self.start_time, self.end_time, self.client_ip_blocks)
@@ -163,8 +165,8 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 1.0.0.0/16 AND 5.0.0.0/16 OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 10.0.0.0/16 AND 15.0.0.0/16)'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\'))'
     )
     self.assertNormalizedStringsEqual(subquery.query, expected_query)
 
@@ -186,8 +188,8 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 1.0.0.0/16 AND 5.0.0.0/16 OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 10.0.0.0/16 AND 15.0.0.0/16)'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\'))'
       )
 
     self.assertNormalizedStringsEqual(subquery.query, expected_query)
@@ -214,8 +216,8 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 1.0.0.0/16 AND 5.0.0.0/16 OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 10.0.0.0/16 AND 15.0.0.0/16)'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\'))'
     )
     self.assertNormalizedStringsEqual(subquery.query, expected_query)
 
@@ -228,7 +230,7 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
   def setUp(self):
     self.start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
     self.end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-    self.client_ip_blocks = [(netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('5.0.0.0/16')), (netaddr.IPNetwork('10.0.0.0/16'), netaddr.IPNetwork('15.0.0.0/16'))]
+    self.client_ip_blocks = [netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('10.0.0.0/16')]
 
   def test_build_valid_download_median_query(self):
     actual = query.build_metric_median_query('download', self.start_time, self.end_time, self.client_ip_blocks)
@@ -254,8 +256,8 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 1.0.0.0/16 AND 5.0.0.0/16 OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 10.0.0.0/16 AND 15.0.0.0/16))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\')))'
     )
 
     expected = (
@@ -285,8 +287,8 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         'AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 1.0.0.0/16 AND 5.0.0.0/16 OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 10.0.0.0/16 AND 15.0.0.0/16))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\')))'
       )
 
     expected = (
@@ -320,8 +322,8 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 1.0.0.0/16 AND 5.0.0.0/16 OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN 10.0.0.0/16 AND 15.0.0.0/16))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\')))'
     )
 
     expected = (
@@ -332,6 +334,20 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
     ).format(subquery=expected_rtt_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)
+
+class IpnetworkToIpRangeQueryTest(unittest.TestCase):
+
+  def test_build_valid_rtt_median_query(self):
+    ip_network = netaddr.IPNetwork('1.0.0.0/24')
+    actual = query.ipnetwork_to_iprange(ip_network)
+    self.assertEqual(actual[0], netaddr.IPAddress('1.0.0.0'))
+    self.assertEqual(actual[1], netaddr.IPAddress('1.0.0.255'))
+
+  def test_build_valid_rtt_median_query(self):
+    ip_network = netaddr.IPNetwork('10.0.0.0/16')
+    actual = query.ipnetwork_to_iprange(ip_network)
+    self.assertEqual(actual[0], netaddr.IPAddress('10.0.0.0'))
+    self.assertEqual(actual[1], netaddr.IPAddress('10.0.255.255'))
 
 if __name__ == '__main__':
   unittest.main()
