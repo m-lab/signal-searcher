@@ -26,15 +26,6 @@ import datetime
 import bigquery_talk
 import query
 
-import netaddr
-import pytz
-
-
-import datetime
-from math import pi
-from math import sin
-import random
-import unittest
 
 MlabDataEntry = collections.namedtuple(
     'MlabDataEntry', ['time', 'upload_speed', 'download_speed', 'min_latency'])
@@ -83,9 +74,7 @@ def read_timeseries(netblocks, start_time, end_time, credentials):
 
   Returns:
     Data in a dictionary in the following form:
-      IPNetwork('10.2.0.0/16'): [], IPNetwork('1.2.0.0/16'): [MlabDataEntry(time=0,
-
-
+        { IPNetwork('1.2.0.0/16'): MlabDataEntry }
   """
   data = {}
   for block in netblocks:
@@ -97,29 +86,13 @@ def read_timeseries(netblocks, start_time, end_time, credentials):
     download_data = _get_data(block, 'download', start_time, end_time, credentials)
     latency_data = _get_data(block, 'minimum_rtt', start_time, end_time, credentials)
 
-    length = _fix_data_length(upload_data, download_data, latency_data)
+    length = _fix_data_length(upload_data[1], download_data[1], latency_data[1])
 
     for hour in range(0, length):
         data[block].append(MlabDataEntry(
                 time=hour,
-                upload_speed=upload_data[hour],
-                download_speed=download_data[hour],
-                min_latency=latency_data[hour]))
+                upload_speed=upload_data[1][hour],
+                download_speed=download_data[1][hour],
+                min_latency=latency_data[1][hour]))
 
   return data
-
-def main():
-
-  netblocks = [netaddr.IPNetwork('1.2.0.0/16'), netaddr.IPNetwork('10.2.0.0/16')]
-  start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
-  end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-
-  data = read_timeseries(netblocks, start_time, end_time, "/Users/LavalleF/.config/gcloud/credentials")
-
-  print "finished getting data"
-  print data
-
-
-
-if __name__ == '__main__':
-  main()
