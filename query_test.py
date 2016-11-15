@@ -33,31 +33,24 @@ class QueryConditionalsTest(NormalizedStringTestCase):
   def setUp(self):
     start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
     end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-    client_ip_blocks = [netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('10.0.0.0/16')]
-    self.conditional = query.QueryConditionals(start_time, end_time, client_ip_blocks)
+    client_ip_block = netaddr.IPNetwork('1.0.0.0/16')
+    self.conditional = query.QueryConditionals(start_time, end_time, client_ip_block)
 
-    self.generate_expected_nonmetric_dict(start_time, end_time, client_ip_blocks)
+    self.generate_expected_nonmetric_dict(start_time, end_time, client_ip_block)
 
   def datetime_to_seconds(self, dt):
     return int((dt - datetime.datetime(1970, 1, 1, tzinfo=pytz.utc)).total_seconds())
 
-  def generate_expected_nonmetric_dict(self, start_time, end_time, client_ip_blocks):
+  def generate_expected_nonmetric_dict(self, start_time, end_time, client_ip_block):
     start_time_unix = self.datetime_to_seconds(start_time)
     end_time_unix = self.datetime_to_seconds(end_time)
 
-    ip_range_0= query.ipnetwork_to_iprange(client_ip_blocks[0])
-    expected_client_ip_blocks_0 = (
+    ip_range= query.ipnetwork_to_iprange(client_ip_block)
+    expected_client_ip_block = (
       'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
       'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')'.format(
-          start_addr=str(ip_range_0[0]),
-          end_addr=str(ip_range_0[1])))
-
-    ip_range_1= query.ipnetwork_to_iprange(client_ip_blocks[1])
-    expected_client_ip_blocks_1 = (
-      'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
-      'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')'.format(
-          start_addr=str(ip_range_1[0]),
-          end_addr=str(ip_range_1[1])))
+          start_addr=str(ip_range[0]),
+          end_addr=str(ip_range[1])))
 
     expected_complete_tcp = (
       '(web100_log_entry.snap.State = 1 '
@@ -72,7 +65,7 @@ class QueryConditionalsTest(NormalizedStringTestCase):
     self.expected_nonmetric_dict = {
       'complete_tcp' : expected_complete_tcp,
       'log_time' : expected_log_time,
-      'client_ip_blocks' : [expected_client_ip_blocks_0, expected_client_ip_blocks_1]
+      'client_ip_block' : expected_client_ip_block
     }
 
   def test_download_dictionary_has_expected_metric_conditions(self):
@@ -97,7 +90,7 @@ class QueryConditionalsTest(NormalizedStringTestCase):
 
     actual_keys = cond_dict.keys()
     actual_keys.sort()
-    self.assertListEqual(actual_keys, ['client_ip_blocks', 'complete_tcp', 'data_direction', 'log_time', 'upload'])
+    self.assertListEqual(actual_keys, ['client_ip_block', 'complete_tcp', 'data_direction', 'log_time', 'upload'])
 
     expected_upload = (
       'web100_log_entry.snap.HCThruOctetsReceived >= 8192 '
@@ -109,7 +102,7 @@ class QueryConditionalsTest(NormalizedStringTestCase):
       'AND connection_spec.data_direction IS NOT NULL')
 
     # For each key in the dictionary, make sure it has the same value
-    self.assertListEqual(cond_dict['client_ip_blocks'], self.expected_nonmetric_dict['client_ip_blocks'])
+    self.assertEqual(cond_dict['client_ip_block'], self.expected_nonmetric_dict['client_ip_block'])
     self.assertNormalizedStringsEqual(cond_dict['complete_tcp'], self.expected_nonmetric_dict['complete_tcp'])
     self.assertNormalizedStringsEqual(cond_dict['log_time'], self.expected_nonmetric_dict['log_time'])
 
@@ -139,13 +132,14 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
   def setUp(self):
     self.start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
     self.end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-    self.client_ip_blocks = [netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('10.0.0.0/16')]
+    self.client_ip_block = netaddr.IPNetwork('1.0.0.0/16')
 
   def test_download_subquery_is_correct(self):
-    subquery = query.SubQueryGenerator('download', self.start_time, self.end_time, self.client_ip_blocks)
+    subquery = query.SubQueryGenerator('download', self.start_time, self.end_time, self.client_ip_block)
     expected_query = (
       'SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         '8 * (web100_log_entry.snap.HCThruOctetsAcked / '
         '(web100_log_entry.snap.SndLimTimeRwin + '
         'web100_log_entry.snap.SndLimTimeCwnd + '
@@ -165,16 +159,16 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\'))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\'))'
     )
     self.assertNormalizedStringsEqual(subquery.query, expected_query)
 
   def test_upload_subquery_is_correct(self):
-    subquery = query.SubQueryGenerator('upload', self.start_time, self.end_time, self.client_ip_blocks)
+    subquery = query.SubQueryGenerator('upload', self.start_time, self.end_time, self.client_ip_block)
     expected_query = (
       'SELECT '
       'web100_log_entry.log_time AS timestamp, '
+      'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
       '8 * (web100_log_entry.snap.HCThruOctetsReceived / '
       ' web100_log_entry.snap.Duration) AS upload_mbps '
       'FROM plx.google:m_lab.ndt.all '
@@ -188,17 +182,17 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\'))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\'))'
       )
 
     self.assertNormalizedStringsEqual(subquery.query, expected_query)
 
   def test_rtt_subquery_is_correct(self):
-    subquery = query.SubQueryGenerator('minimum_rtt', self.start_time, self.end_time, self.client_ip_blocks)
+    subquery = query.SubQueryGenerator('minimum_rtt', self.start_time, self.end_time, self.client_ip_block)
     expected_query = (
       'SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         'web100_log_entry.snap.MinRTT AS minimum_rtt_ms '
       'FROM plx.google:m_lab.ndt.all '
       'WHERE '
@@ -216,27 +210,27 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\'))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\'))'
     )
     self.assertNormalizedStringsEqual(subquery.query, expected_query)
 
   def test_subquery_with_mock_metric_raises_not_implemented_error(self):
     with self.assertRaises(NotImplementedError):
-      query.SubQueryGenerator('mock_metric', self.start_time, self.end_time, self.client_ip_blocks)
+      query.SubQueryGenerator('mock_metric', self.start_time, self.end_time, self.client_ip_block)
 
 class BuildMetricMedianQueryTest(NormalizedStringTestCase):
 
   def setUp(self):
     self.start_time = datetime.datetime(2014, 1, 1, tzinfo=pytz.utc)
     self.end_time = datetime.datetime(2014, 2, 1, tzinfo=pytz.utc)
-    self.client_ip_blocks = [netaddr.IPNetwork('1.0.0.0/16'), netaddr.IPNetwork('10.0.0.0/16')]
+    self.client_ip_block = netaddr.IPNetwork('1.0.0.0/16')
 
   def test_build_valid_download_median_query(self):
-    actual = query.build_metric_median_query('download', self.start_time, self.end_time, self.client_ip_blocks)
+    actual = query.build_metric_median_query('download', self.start_time, self.end_time, self.client_ip_block)
     expected_download_subquery = (
       '(SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         '8 * (web100_log_entry.snap.HCThruOctetsAcked / '
         '(web100_log_entry.snap.SndLimTimeRwin + '
         'web100_log_entry.snap.SndLimTimeCwnd + '
@@ -256,24 +250,27 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\')))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\')))'
     )
 
     expected = (
       'SELECT '
-      'NTH( 51, QUANTILES(download_mbps, 101)) AS median_download_mbps '
+      'hour, '
+      'NTH( 51, QUANTILES(download_mbps, 101)) AS hourly_median_download_mbps '
       'FROM '
-      '{subquery}'
+      '{subquery} '
+      'GROUP BY hour '
+      'ORDER BY hour'
     ).format(subquery=expected_download_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)
 
   def test_build_valid_upload_median_query(self):
-    actual = query.build_metric_median_query('upload', self.start_time, self.end_time, self.client_ip_blocks)
+    actual = query.build_metric_median_query('upload', self.start_time, self.end_time, self.client_ip_block)
     expected_upload_subquery = (
       '(SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         '8 * (web100_log_entry.snap.HCThruOctetsReceived / '
         'web100_log_entry.snap.Duration) AS upload_mbps '
       'FROM plx.google:m_lab.ndt.all '
@@ -287,24 +284,27 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         'AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\')))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\')))'
       )
 
     expected = (
       'SELECT '
-      'NTH( 51, QUANTILES(upload_mbps, 101)) AS median_upload_mbps '
+      'hour, '
+      'NTH( 51, QUANTILES(upload_mbps, 101)) AS hourly_median_upload_mbps '
       'FROM '
-      '{subquery}'
+      '{subquery} '
+      'GROUP BY hour '
+      'ORDER BY hour'
     ).format(subquery=expected_upload_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)
 
   def test_build_valid_rtt_median_query(self):
-    actual = query.build_metric_median_query('minimum_rtt', self.start_time, self.end_time, self.client_ip_blocks)
+    actual = query.build_metric_median_query('minimum_rtt', self.start_time, self.end_time, self.client_ip_block)
     expected_rtt_subquery = (
       '(SELECT '
       'web100_log_entry.log_time AS timestamp, '
+      'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
       'web100_log_entry.snap.MinRTT AS minimum_rtt_ms '
       'FROM plx.google:m_lab.ndt.all '
       'WHERE '
@@ -322,15 +322,17 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
         '(web100_log_entry.log_time >= 1388534400) '
         ' AND (web100_log_entry.log_time < 1391212800) '
       'AND ('
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\') OR '
-        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'10.0.0.0\') AND PARSE_IP(\'10.0.255.255\')))'
+        'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN PARSE_IP(\'1.0.0.0\') AND PARSE_IP(\'1.0.255.255\')))'
     )
 
     expected = (
       'SELECT '
-      'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS median_minimum_rtt_ms '
+        'hour, '
+        'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS hourly_median_minimum_rtt_ms '
       'FROM '
-      '{subquery}'
+        '{subquery} '
+      'GROUP BY hour '
+      'ORDER BY hour'
     ).format(subquery=expected_rtt_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)

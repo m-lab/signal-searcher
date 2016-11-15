@@ -216,10 +216,48 @@ class BigQueryCallHandler(object):
                     raise Exception('UnknownBigQueryResponse')
         return None
 
+    def _tuplefy_response(self, query_results):
+        """Takes the BigQuery response and returns a simple to read tuple.
+
+        Tuple is in the format:
+            (field name, list of hourly metric medians)
+
+        The list of hourly metric medians is in the order of the hour is in
+        order (The first value represents the median of the first hour in a
+        day.)
+        """
+        field_name = str(query_results['schema']['fields'][1]['name'])
+        values = []
+
+        try:
+            rows = query_results['rows']
+        except KeyError as e:
+            # if there are no rows, return a blank list
+            if int(query_results['totalRows']) == 0:
+                return (field_name, [])
+            # for any other key errors, raise exception
+            else:
+                raise BigQueryCommunicationError(
+                    'Unknown BigQuery response', e)
+
+        for row in rows:
+        # row format: {u'f': [{u'v': u'0'}, {u'v': u'0.2180470026391856'}]}
+            hour = int(row['f'][0]['v'])
+
+            # if the index of values is in step with the "hours" value of the
+            # measurements
+            if hour == len(values):
+                values.append(float(row['f'][1]['v']))
+            else:
+                while len(values)-1 < hour:
+                    values.append(None)
+
+        return (field_name, values)
+
     def _collect_query_results(self):
         try:
             response = self._job.getQueryResults(projectId=self._project_id, jobId=self._job_id).execute()
-            response_tuple = (str(response['schema']['fields'][0]['name']), int(response['rows'][0]['f'][0]['v']))
+            response_tuple = self._tuplefy_response(response)
             logger.info('Received query results: %s', str(response_tuple))
             return response_tuple
         except HttpError as e:
@@ -230,7 +268,3 @@ class BigQueryCallHandler(object):
             else:
                 raise BigQueryCommunicationError(
                     'Failed to communicate with BigQuery', e)
-        except Exception as e:
-             raise Exception('UnknownBigQueryResponse')
-
-
