@@ -18,6 +18,7 @@
 
 import datetime
 import logging
+import netaddr
 import pytz
 
 METRICS = ['download', 'upload', 'minimum_rtt']
@@ -31,6 +32,17 @@ def _seconds_to_microseconds(seconds):
 
 def _is_server_to_client_metric(metric):
     return metric in ('download', 'minimum_rtt')
+
+def ipnetwork_to_iprange(ipnetwork):
+    """Returns an ip range for a given netaddr.IPNetwork instance."""
+    addr_tuple = ipnetwork.ip.words
+    prefix_i = ipnetwork.prefixlen/8
+    last_ip = ['255']*4
+
+    for i in range(0, prefix_i):
+        last_ip[i] = str(addr_tuple[i])
+    return (ipnetwork.ip, netaddr.IPAddress('.'.join(last_ip)))
+
 
 class QueryConditionals(object):
     """Generates a dictionary of conditional statements for building a query.
@@ -63,15 +75,15 @@ class QueryConditionals(object):
     # RTT.
     MIN_RTT_SAMPLES = 10
 
-    def __init__(self, start_time, end_time, client_ip_blocks):
+    def __init__(self, start_time, end_time, client_ip_block):
         """Initializes a QueryConditional object.
 
         Args:
             start_time: datetime.datetime instance of starting time range.
             end_time: datetime.datetime instance of end of time range.
-            client_ip_blocks: List of tuples of netaddr.IPNetwork objects.
+            client_ip_block: netaddr.IPNetwork object
                 ex:
-                    [(IPNetwork('1.2.0.0/16'), IPNetwork('5.1.0.0/16'))]
+                    netaddr.IPNetwork('1.2.0.0/16')
         """
         self._conditional_dict = {}
         # Must have completed the TCP three-way handshake.
@@ -85,7 +97,7 @@ class QueryConditionals(object):
 
         # Add non metric specific conditions
         self._add_log_time_conditional(start_time, end_time)
-        self._add_client_ip_blocks_conditional(client_ip_blocks)
+        self._add_client_ip_block_conditional(client_ip_block)
 
     def _add_log_time_conditional(self, start_time_datetime, end_time_datetime):
         utc_absolutely_utc = unix_timestamp_to_utc_datetime(0)
@@ -100,24 +112,19 @@ class QueryConditionals(object):
 
         self._conditional_dict['log_time'] = new_statement
 
-    def _add_client_ip_blocks_conditional(self, client_ip_blocks):
-        # remove duplicates, warn if any are found
-        unique_client_ip_blocks = list(set(client_ip_blocks))
-        if len(client_ip_blocks) != len(unique_client_ip_blocks):
-            self.logger.warning('Client IP blocks contained duplicates.')
+    def _add_client_ip_block_conditional(self, client_ip_block):
+        """Adds the client ip block clauses to self._conditional_dict.
 
-        # sort the blocks for the sake of consistent query generation
-        unique_client_ip_blocks = sorted(unique_client_ip_blocks,
-                                         key=lambda block: block[0])
-
-        self._conditional_dict['client_ip_blocks'] = []
-        for start_addr, end_addr in client_ip_blocks:
-            new_statement = (
-                'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
-                '{start_addr} AND {end_addr}').format(
-                    start_addr=str(start_addr),
-                    end_addr=str(end_addr))
-            self._conditional_dict['client_ip_blocks'].append(new_statement)
+        Args:
+            client_ip_block: netaddr.IPNetwork instance
+        """
+        start_ip, end_ip = ipnetwork_to_iprange(client_ip_block)
+        new_statement = (
+            'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
+            'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')').format(
+                start_addr=start_ip,
+                end_addr=end_ip)
+        self._conditional_dict['client_ip_block'] = new_statement
 
     def _create_metric_specific_dict(self, metric):
         """Adds metric specific conditions to the conditional dictionary.
@@ -187,8 +194,8 @@ class QueryConditionals(object):
 
 class SubQueryGenerator(object):
 
-    def __init__(self, metric, start_time, end_time, client_ip_blocks):
-        self._conditionals = QueryConditionals(start_time, end_time, client_ip_blocks).get_conditional_dict(metric)
+    def __init__(self, metric, start_time, end_time, client_ip_block):
+        self._conditionals = QueryConditionals(start_time, end_time, client_ip_block).get_conditional_dict(metric)
         self._metric = metric
         self._query = self._create_query_string()
 
@@ -210,10 +217,8 @@ class SubQueryGenerator(object):
             self._conditionals[self._metric])
         conditional_list_string += '\n\tAND %s' % self._conditionals['log_time']
 
-        client_ip_blocks_joined = ' OR\n\t\t'.join(self._conditionals[
-            'client_ip_blocks'])
-        conditional_list_string += '\n\tAND (%s)' % client_ip_blocks_joined
-
+        conditional_list_string += '\n\tAND (%s)' % self._conditionals[
+            'client_ip_block']
         built_query_string = built_query_format.format(
             select_clauses=self._create_select_clauses(self._metric),
             table='plx.google:m_lab.ndt.all',
@@ -222,46 +227,53 @@ class SubQueryGenerator(object):
         return built_query_string
 
     def _create_select_clauses(self, metric):
+        select_format = ('web100_log_entry.log_time AS timestamp,\n'
+            '\tHOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, \n'
+            '{metric_select}')
+
         if metric == 'download':
-          return ('web100_log_entry.log_time AS timestamp,\n'
+          return select_format.format(metric_select=(
             '\t8 * (web100_log_entry.snap.HCThruOctetsAcked /\n'
             '\t\t(web100_log_entry.snap.SndLimTimeRwin +\n'
             '\t\t web100_log_entry.snap.SndLimTimeCwnd +\n'
-            '\t\t web100_log_entry.snap.SndLimTimeSnd)) AS download_mbps')
+            '\t\t web100_log_entry.snap.SndLimTimeSnd)) AS download_mbps'))
         elif metric == 'upload':
-          return ('web100_log_entry.log_time AS timestamp,\n'
+          return select_format.format(metric_select=(
             '\t8 * (web100_log_entry.snap.HCThruOctetsReceived /\n'
-            '\t\t web100_log_entry.snap.Duration) AS upload_mbps')
+            '\t\t web100_log_entry.snap.Duration) AS upload_mbps'))
         elif metric == 'minimum_rtt':
-           return ('web100_log_entry.log_time AS timestamp,\n'
-                '\tweb100_log_entry.snap.MinRTT AS minimum_rtt_ms')
+           return select_format.format(metric_select=(
+                '\tweb100_log_entry.snap.MinRTT AS minimum_rtt_ms'))
         else:
            raise ValueError('bad metric: ' + metric)
 
-def build_metric_median_query(metric, start_time, end_time, client_ip_blocks):
+def build_metric_median_query(metric, start_time, end_time, client_ip_block):
     """Builds a query to calculate the median of a metric by time and ip block.
 
     Args:
         metric: One of upload, download and minimum rtt.
         start_time: Datetime instance representing beginning of range.
         end_time: Datetime instance representing end of range.
-        client_ip_blocks: List of tuples of ip blocks.
+        client_ip_block: netaddr.IPNetwork instance.
 
     Returns:
         String representation of a query.
     """
     built_query_format = ('SELECT\n'
+                            '\thour,\n'
                             '\t{median_select}\n'
                           'FROM\n'
-                            '\t{subquery_table}')
+                            '\t{subquery_table}\n'
+                          'GROUP BY hour\n'
+                          'ORDER BY hour')
 
-    subquery = SubQueryGenerator(metric, start_time, end_time, client_ip_blocks)
+    subquery = SubQueryGenerator(metric, start_time, end_time, client_ip_block)
     subquery_string = '(%s)' % subquery.query
 
     if metric == 'minimum_rtt':
         metric_with_unit = metric+'_ms'
     else:
         metric_with_unit = metric+'_mbps'
-    select = 'NTH( 51, QUANTILES({m}, 101)) AS median_{m}'.format(m=metric_with_unit)
+    select = 'NTH( 51, QUANTILES({m}, 101)) AS hourly_median_{m}'.format(m=metric_with_unit)
 
     return built_query_format.format(median_select=select, subquery_table=subquery_string)

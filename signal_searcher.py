@@ -82,6 +82,12 @@ def parse_command_line(cli_args=None):
       nargs='+',
       help='netblock(s) of interest for signal searcher')
   parser.add_argument(
+      '--credentials',
+      default=''
+      metavar='PATH',
+      nargs=1,
+      help='The path to local Google Cloud credentials (defaults to blank)')
+  parser.add_argument(
       '--start',
       default=[datetime.datetime(datetime.datetime.now().year, 1, 1, 0, 0)],
       metavar='DATETIME',
@@ -101,15 +107,15 @@ def parse_command_line(cli_args=None):
     args = parser.parse_args(cli_args)
   except (netaddr.core.AddrFormatError, ValueError) as e:
     parser.error(e.message)
-  return (args.start[0], args.end[0], args.netblocks)
+  return (args.start[0], args.end[0], args.netblocks, args.credentials)
 
 
 def main():
   # Parse the command-line
-  start, end, netblocks = parse_command_line()
+  start, end, netblocks, credentials = parse_command_line()
 
   # Read the data
-  timeseries = mlabreader.read_timeseries(netblocks, start, end)
+  timeseries = mlabreader.read_timeseries(netblocks, start, end, credentials)
 
   # Look for problems
   cycle_problems = cyclic.find_problems(timeseries)
