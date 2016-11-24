@@ -139,6 +139,7 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
     expected_query = (
       'SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'DATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date, '
         'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         '8 * (web100_log_entry.snap.HCThruOctetsAcked / '
         '(web100_log_entry.snap.SndLimTimeRwin + '
@@ -168,6 +169,7 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
     expected_query = (
       'SELECT '
       'web100_log_entry.log_time AS timestamp, '
+      'DATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date, '
       'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
       '8 * (web100_log_entry.snap.HCThruOctetsReceived / '
       ' web100_log_entry.snap.Duration) AS upload_mbps '
@@ -192,6 +194,7 @@ class SubQueryGeneratorTest(NormalizedStringTestCase):
     expected_query = (
       'SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'DATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date, '
         'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         'web100_log_entry.snap.MinRTT AS minimum_rtt_ms '
       'FROM plx.google:m_lab.ndt.all '
@@ -230,6 +233,7 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
     expected_download_subquery = (
       '(SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'DATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date, '
         'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         '8 * (web100_log_entry.snap.HCThruOctetsAcked / '
         '(web100_log_entry.snap.SndLimTimeRwin + '
@@ -255,12 +259,13 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
 
     expected = (
       'SELECT '
-      'hour, '
-      'NTH( 51, QUANTILES(download_mbps, 101)) AS hourly_median_download_mbps '
+        'date, '
+        'hour, '
+        'NTH( 51, QUANTILES(download_mbps, 101)) AS hourly_median_download_mbps '
       'FROM '
-      '{subquery} '
-      'GROUP BY hour '
-      'ORDER BY hour'
+        '{subquery} '
+      'GROUP BY date, hour '
+      'ORDER BY date, hour'
     ).format(subquery=expected_download_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)
@@ -270,6 +275,7 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
     expected_upload_subquery = (
       '(SELECT '
         'web100_log_entry.log_time AS timestamp, '
+        'DATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date, '
         'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
         '8 * (web100_log_entry.snap.HCThruOctetsReceived / '
         'web100_log_entry.snap.Duration) AS upload_mbps '
@@ -289,12 +295,13 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
 
     expected = (
       'SELECT '
-      'hour, '
-      'NTH( 51, QUANTILES(upload_mbps, 101)) AS hourly_median_upload_mbps '
+        'date, '
+        'hour, '
+        'NTH( 51, QUANTILES(upload_mbps, 101)) AS hourly_median_upload_mbps '
       'FROM '
-      '{subquery} '
-      'GROUP BY hour '
-      'ORDER BY hour'
+        '{subquery} '
+      'GROUP BY date, hour '
+      'ORDER BY date, hour'
     ).format(subquery=expected_upload_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)
@@ -304,6 +311,7 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
     expected_rtt_subquery = (
       '(SELECT '
       'web100_log_entry.log_time AS timestamp, '
+      'DATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date, '
       'HOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, '
       'web100_log_entry.snap.MinRTT AS minimum_rtt_ms '
       'FROM plx.google:m_lab.ndt.all '
@@ -327,12 +335,13 @@ class BuildMetricMedianQueryTest(NormalizedStringTestCase):
 
     expected = (
       'SELECT '
+        'date, '
         'hour, '
         'NTH( 51, QUANTILES(minimum_rtt_ms, 101)) AS hourly_median_minimum_rtt_ms '
       'FROM '
         '{subquery} '
-      'GROUP BY hour '
-      'ORDER BY hour'
+      'GROUP BY date, hour '
+      'ORDER BY date, hour'
     ).format(subquery=expected_rtt_subquery)
 
     self.assertNormalizedStringsEqual(expected, actual)

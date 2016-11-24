@@ -90,7 +90,7 @@ def read_timeseries(netblocks, start_time, end_time, credentials):
 
     for hour in range(0, length):
         data[block].append(MlabDataEntry(
-                time=hour,
+                time=upload_data[0],
                 upload_speed=upload_data[1][hour],
                 download_speed=download_data[1][hour],
                 min_latency=latency_data[1][hour]))

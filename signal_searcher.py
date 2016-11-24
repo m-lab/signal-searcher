@@ -76,18 +76,6 @@ def parse_command_line(cli_args=None):
   parser = argparse.ArgumentParser(
       description='Analyze mLab data to find interesting and important signals')
   parser.add_argument(
-      'netblocks',
-      metavar='NETBLOCK',
-      type=netaddr.IPNetwork,
-      nargs='+',
-      help='netblock(s) of interest for signal searcher')
-  parser.add_argument(
-      '--credentials',
-      default=''
-      metavar='PATH',
-      nargs=1,
-      help='The path to local Google Cloud credentials (defaults to blank)')
-  parser.add_argument(
       '--start',
       default=[datetime.datetime(datetime.datetime.now().year, 1, 1, 0, 0)],
       metavar='DATETIME',
@@ -103,6 +91,18 @@ def parse_command_line(cli_args=None):
       nargs=1,
       help='The end of the time period to search '
       '(defaults to the current time)')
+  parser.add_argument(
+      '--credentials',
+      default='',
+      metavar='PATH',
+      nargs=1,
+      help='The path to local Google Cloud credentials (defaults to blank)')
+  parser.add_argument(
+      'netblocks',
+      metavar='NETBLOCK',
+      type=netaddr.IPNetwork,
+      nargs='+',
+      help='netblock(s) of interest for signal searcher')
   try:
     args = parser.parse_args(cli_args)
   except (netaddr.core.AddrFormatError, ValueError) as e:

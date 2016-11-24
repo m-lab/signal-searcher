@@ -228,6 +228,7 @@ class SubQueryGenerator(object):
 
     def _create_select_clauses(self, metric):
         select_format = ('web100_log_entry.log_time AS timestamp,\n'
+            '\tDATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date,'
             '\tHOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, \n'
             '{metric_select}')
 
@@ -260,12 +261,13 @@ def build_metric_median_query(metric, start_time, end_time, client_ip_block):
         String representation of a query.
     """
     built_query_format = ('SELECT\n'
+                            '\tdate,\n'
                             '\thour,\n'
                             '\t{median_select}\n'
                           'FROM\n'
                             '\t{subquery_table}\n'
-                          'GROUP BY hour\n'
-                          'ORDER BY hour')
+                          'GROUP BY date, hour\n'
+                          'ORDER BY date, hour')
 
     subquery = SubQueryGenerator(metric, start_time, end_time, client_ip_block)
     subquery_string = '(%s)' % subquery.query
