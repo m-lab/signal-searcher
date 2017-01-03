@@ -37,11 +37,12 @@ class SignalSearcherTestCase(unittest.TestCase):
     self.assertTrue(saw_error)
 
   def test_argument_parsing(self):
-    start, end, blocks = signal_searcher.parse_command_line(
+    start, end, blocks, credentials = signal_searcher.parse_command_line(
         ['--start="January 2, 2015"', '--end', '2015-1-3', '10.0.0.0/8',
-         '192.168.0.0/16'])
+         '192.168.0.0/16', ])
+
     self.assertEqual(start, datetime.datetime(year=2015, month=1, day=2))
     self.assertEqual(end, datetime.datetime(year=2015, month=1, day=3))
-    self.assertIn(netaddr.IPNetwork('10.0.0.0/8'), blocks)
-    self.assertIn(netaddr.IPNetwork('192.168.0.0/16'), blocks)
+    self.assertIn(netaddr.IPNetwork('10.0.0.0/8'), blocks[0])
+    self.assertIn(netaddr.IPNetwork('192.168.0.0/16'), blocks[1])
     self.assertEqual(len(blocks), 2)
