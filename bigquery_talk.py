@@ -22,11 +22,13 @@ import os
 import ssl
 import time
 
+# pylint: disable=no-name-in-module, import-error
 from apiclient.discovery import build
 from apiclient.errors import HttpError
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import run_flow
+# pylint: enable=no-name-in-module, import-error
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +126,8 @@ class GoogleAPIAuthHandler(object):
         projects_list = projects_handler.list().execute()
 
         if projects_list['totalItems'] == 0:
-            raise APIConfigError()
+            # Was raise APIConfigError, but that doesn't exist
+            raise Exception()
         else:
             project_numeric_id = projects_list['projects'][0]['numericId']
 

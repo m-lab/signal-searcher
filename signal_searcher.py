@@ -28,7 +28,7 @@ import sys
 
 import cyclic
 import dateparser
-import mlabreader
+import bqreader
 import netaddr
 import report
 
@@ -115,7 +115,7 @@ def main():
   start, end, netblocks, credentials = parse_command_line()
 
   # Read the data
-  timeseries = mlabreader.read_timeseries(netblocks, start, end, credentials)
+  timeseries = bqreader.read_timeseries(netblocks, start, end, credentials)
 
   # Look for problems
   cycle_problems = cyclic.find_problems(timeseries)

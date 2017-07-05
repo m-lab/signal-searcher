@@ -18,7 +18,7 @@ import random
 import unittest
 
 import degradation
-import mlabreader
+import mlabdata
 import netaddr
 
 
@@ -64,8 +64,8 @@ class TestDegradationProblemFinder(unittest.TestCase):
     performance = [i for i in range(365 * 24)]
     # But the slope is negative for the last month
     hours_per_month = 24 * 31
-    performance[len(performance) - hours_per_month:] = reversed(performance[len(
-        performance) - hours_per_month:])
+    performance[len(performance) - hours_per_month:] = \
+            reversed(performance[len(performance) - hours_per_month:])
     problems = list(
         degradation._performance_degradation(
             netaddr.IPNetwork('10.0.0.0/8'),
@@ -121,19 +121,19 @@ class TestDegradationProblemFinder(unittest.TestCase):
     latency[-hours_per_month:-hours_per_month+hours_per_week] = list(
         reversed(latency[-hours_per_month:-hours_per_month+hours_per_week]))
     start = datetime.datetime(2016, 1, 1, 0, 0)
-    data = [mlabreader.MlabDataEntry(start + datetime.timedelta(hours=i),
-                                     upload_speed=upload[i],
-                                     download_speed=download[i],
-                                     min_latency=latency[i]) for i in range(3650 * 24 + 1)]
+    data = [mlabdata.MlabDataEntry(start + datetime.timedelta(hours=i),
+                                    upload_speed=upload[i],
+                                    download_speed=download[i],
+                                    min_latency=latency[i]) for i in range(3650 * 24 + 1)]
     problems = list(degradation.find_problems({netaddr.IPNetwork('10.0.0.0/8'):  data}))
     self.assertEqual(len(problems), 2)
 
   def test_no_too_small_data(self):
     start = datetime.datetime(2016, 1, 1, 0, 0)
-    data = [mlabreader.MlabDataEntry(start + datetime.timedelta(hours=i),
-                                     upload_speed=1,
-                                     download_speed=1,
-                                     min_latency=1) for i in range(12)]
+    data = [mlabdata.MlabDataEntry(start + datetime.timedelta(hours=i),
+                                   upload_speed=1,
+                                   download_speed=1,
+                                   min_latency=1) for i in range(12)]
     problems = list(degradation.find_problems({netaddr.IPNetwork('10.0.0.0/8'):  data}))
     self.assertEqual(len(problems), 0)
 

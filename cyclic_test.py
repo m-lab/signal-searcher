@@ -20,17 +20,17 @@ import random
 import unittest
 
 import cyclic
-import mlabreader
+import mlabdata
 import netaddr
 
 
 def flat_dataset(start, n):
-  return [mlabreader.MlabDataEntry(
+  return [mlabdata.MlabDataEntry(
       start + datetime.timedelta(hours=i), 1000, 10000, 100) for i in range(n)]
 
 
 def cyclic_dataset(start, n):
-  return [mlabreader.MlabDataEntry(
+  return [mlabdata.MlabDataEntry(
       start + datetime.timedelta(hours=i),
       1000 + 1000 * sin(float(i) / 24.0 * 2 * pi),
       10000 + 10000 * sin(float(i + 8) / 24.0 * 2 * pi),
@@ -38,7 +38,7 @@ def cyclic_dataset(start, n):
 
 
 def slightly_cyclic_noisy_dataset(start, n):
-  return [mlabreader.MlabDataEntry(
+  return [mlabdata.MlabDataEntry(
       start + datetime.timedelta(hours=i),
       1000 + random.random() * 10,
       10000 + 10000 * sin(float(i + 8) / 24.0 * 2 * pi) + 10 * random.random(),

@@ -354,7 +354,7 @@ class IpnetworkToIpRangeQueryTest(unittest.TestCase):
     self.assertEqual(actual[0], netaddr.IPAddress('1.0.0.0'))
     self.assertEqual(actual[1], netaddr.IPAddress('1.0.0.255'))
 
-  def test_build_valid_rtt_median_query(self):
+  def test_build_valid_rtt_median_query_again(self):
     ip_network = netaddr.IPNetwork('10.0.0.0/16')
     actual = query.ipnetwork_to_iprange(ip_network)
     self.assertEqual(actual[0], netaddr.IPAddress('10.0.0.0'))

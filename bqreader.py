@@ -23,12 +23,10 @@ resulting query charges will go to MLab instead of you.
 import collections
 import datetime
 
+import mlabdata
 import bigquery_talk
 import query
 
-
-MlabDataEntry = collections.namedtuple(
-    'MlabDataEntry', ['time', 'upload_speed', 'download_speed', 'min_latency'])
 
 def _get_bigquery_call_object(credentials_path, headless=False):
   # get authenticated service object for talking to BigQuery
@@ -89,7 +87,7 @@ def read_timeseries(netblocks, start_time, end_time, credentials):
     length = _fix_data_length(upload_data[1], download_data[1], latency_data[1])
 
     for hour in range(0, length):
-        data[block].append(MlabDataEntry(
+        data[block].append(mlabdata.MlabDataEntry(
                 time=upload_data[0],
                 upload_speed=upload_data[1][hour],
                 download_speed=download_data[1][hour],
