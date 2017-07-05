@@ -28,18 +28,18 @@ would need to implement its own Report.
 
 
 def _netblock_size(block):
-  """A helper method that should exist as part of the IPNetwork class."""
-  return 1 + (block.last - block.first)
+    """A helper method that should exist as part of the IPNetwork class."""
+    return 1 + (block.last - block.first)
 
 
 class Problem(object):
-  """Holds a single instance of a discovered problem.
+    """Holds a single instance of a discovered problem.
 
   Designed to be extended by its children to hold specific kinds of problems.
   """
 
-  def __init__(self, netblock, duration, severity, text):
-    """Create a new report of a single Internet performance problem.
+    def __init__(self, netblock, duration, severity, text):
+        """Create a new report of a single Internet performance problem.
 
     Args:
         netblock: The netblock where the problem occurred
@@ -47,27 +47,28 @@ class Problem(object):
         severity: The problem severity, on a scale from 0 (bad) to 10 (okay)
         text: A description of the issue
     """
-    self._netblock = netblock
-    self._duration = duration
-    self._severity = severity
-    self._text = text
+        self._netblock = netblock
+        self._duration = duration
+        self._severity = severity
+        self._text = text
 
-  def __str__(self):
-    return "Problem with %s lasting for %s (severity %d): %s" % (
-        str(self._netblock), str(self._duration), self._severity, self._text)
+    def __str__(self):
+        return 'Problem with %s lasting for %s (severity %d): %s' % (
+            str(self._netblock), str(self._duration), self._severity,
+            self._text)
 
 
 class Report(object):
-  """The compilation of many problems, turned into an explanation."""
+    """The compilation of many problems, turned into an explanation."""
 
-  def __init__(self, *problems):
-    self._problems = []
-    for problem_list in problems:
-      self._problems.extend(problem_list)
+    def __init__(self, *problems):
+        self._problems = []
+        for problem_list in problems:
+            self._problems.extend(problem_list)
 
-  def cli_report(self):
-    if not self._problems:
-      return "No problems found."
-    else:
-      return "Problems found:\n" + "\n".join("  " + str(x)
-                                             for x in self._problems)
+    def cli_report(self):
+        if not self._problems:
+            return 'No problems found.'
+        else:
+            return 'Problems found:\n' + '\n'.join('  ' + str(x)
+                                                   for x in self._problems)

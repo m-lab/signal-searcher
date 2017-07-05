@@ -28,13 +28,13 @@ import sys
 
 import cyclic
 import dateparser
-import mlabreader
+import bqreader
 import netaddr
 import report
 
 
-def parse_date(s):
-  """Parses a date from a string or throws an exception.
+def parse_date(string):
+    """Parses a date from a string or throws an exception.
 
   ArgumentParser is built expecting the custom argument parsers to throw
   exceptions when the parse fails, so we adapt dateparser to conform to that
@@ -49,15 +49,15 @@ def parse_date(s):
   Raises:
       ValueError: on unparseable input
   """
-  d = dateparser.parse(s)
-  if d is None:
-    raise ValueError("can't parse %s into a date" % s)
-  else:
-    return d
+    date = dateparser.parse(string)
+    if date is None:
+        raise ValueError("can't parse %s into a date" % string)
+    else:
+        return date
 
 
 def parse_command_line(cli_args=None):
-  """Parses command-line arguments.
+    """Parses command-line arguments.
 
   Prints help and exits if the user asks for that, and prints an error message
   and exits if the command-line arguments were bad in some way.  Otherwise,
@@ -69,61 +69,63 @@ def parse_command_line(cli_args=None):
   Returns:
       A tuple of (start_time, end_time, netblocks)
   """
-  if cli_args is None:
-    cli_args = sys.argv[1:]
+    if cli_args is None:
+        cli_args = sys.argv[1:]
 
-  # Parse the command line
-  parser = argparse.ArgumentParser(
-      description='Analyze mLab data to find interesting and important signals')
-  parser.add_argument(
-      '--start',
-      default=[datetime.datetime(datetime.datetime.now().year, 1, 1, 0, 0)],
-      metavar='DATETIME',
-      type=parse_date,
-      nargs=1,
-      help='The beginning of the time period to search '
-      '(defaults to the beginning of the current year)')
-  parser.add_argument(
-      '--end',
-      default=[datetime.datetime.now()],
-      metavar='DATETIME',
-      type=parse_date,
-      nargs=1,
-      help='The end of the time period to search '
-      '(defaults to the current time)')
-  parser.add_argument(
-      '--credentials',
-      default='',
-      metavar='PATH',
-      nargs=1,
-      help='The path to local Google Cloud credentials (defaults to blank)')
-  parser.add_argument(
-      'netblocks',
-      metavar='NETBLOCK',
-      type=netaddr.IPNetwork,
-      nargs='+',
-      help='netblock(s) of interest for signal searcher')
-  try:
-    args = parser.parse_args(cli_args)
-  except (netaddr.core.AddrFormatError, ValueError) as e:
-    parser.error(e.message)
-  return (args.start[0], args.end[0], args.netblocks, args.credentials)
+    # Parse the command line
+    parser = argparse.ArgumentParser(
+        description='Analyze mLab data to find interesting and important '
+                    'signals'
+    )
+    parser.add_argument(
+        '--start',
+        default=[datetime.datetime(datetime.datetime.now().year, 1, 1, 0, 0)],
+        metavar='DATETIME',
+        type=parse_date,
+        nargs=1,
+        help='The beginning of the time period to search '
+        '(defaults to the beginning of the current year)')
+    parser.add_argument(
+        '--end',
+        default=[datetime.datetime.now()],
+        metavar='DATETIME',
+        type=parse_date,
+        nargs=1,
+        help='The end of the time period to search '
+        '(defaults to the current time)')
+    parser.add_argument(
+        '--credentials',
+        default='',
+        metavar='PATH',
+        nargs=1,
+        help='The path to local Google Cloud credentials (defaults to blank)')
+    parser.add_argument(
+        'netblocks',
+        metavar='NETBLOCK',
+        type=netaddr.IPNetwork,
+        nargs='+',
+        help='netblock(s) of interest for signal searcher')
+    try:
+        args = parser.parse_args(cli_args)
+    except (netaddr.core.AddrFormatError, ValueError) as error:
+        parser.error(error.message)
+    return (args.start[0], args.end[0], args.netblocks, args.credentials)
 
 
 def main():
-  # Parse the command-line
-  start, end, netblocks, credentials = parse_command_line()
+    # Parse the command-line
+    start, end, netblocks, credentials = parse_command_line()
 
-  # Read the data
-  timeseries = mlabreader.read_timeseries(netblocks, start, end, credentials)
+    # Read the data
+    timeseries = bqreader.read_timeseries(netblocks, start, end, credentials)
 
-  # Look for problems
-  cycle_problems = cyclic.find_problems(timeseries)
+    # Look for problems
+    cycle_problems = cyclic.find_problems(timeseries)
 
-  # Compile a report about the problems
-  final_report = report.Report(cycle_problems)
-  print final_report.cli_report()
+    # Compile a report about the problems
+    final_report = report.Report(cycle_problems)
+    print final_report.cli_report()
 
 
 if __name__ == '__main__':
-  main()
+    main()

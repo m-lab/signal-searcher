@@ -16,22 +16,27 @@
 # limitations under the License.
 import datetime
 import httplib
-import httplib2
 import logging
 import os
 import ssl
 import time
 
+import httplib2
+
+# pylint: disable=no-name-in-module, import-error
 from apiclient.discovery import build
 from apiclient.errors import HttpError
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import run_flow
+# pylint: enable=no-name-in-module, import-error
 
 logger = logging.getLogger(__name__)
 
+
 class BigQueryError(Exception):
     pass
+
 
 class BigQueryCommunicationError(BigQueryError):
     """Indicates that an error occurred trying to communicate with BigQuery.
@@ -39,22 +44,25 @@ class BigQueryCommunicationError(BigQueryError):
     This error means that the result of the query is indeterminate
     because the application failed to communicate with BigQuery.
     """
+
     def __init__(self, message, cause):
         self.cause = cause
-        super(BigQueryCommunicationError, self).__init__('%s (%s)' %
-                                                         (message, self.cause))
+        super(BigQueryCommunicationError, self).__init__(
+            '%s (%s)' % (message, self.cause))
+
 
 class BigQueryJobFailure(BigQueryError):
     """Indicates that a query completed but was unsuccessful."""
 
     def __init__(self, http_code, cause):
         self.code = http_code
-        super(BigQueryJobFailure, self).__init__(cause)
+        super(BigQueryJobFailure, self).__init__(self, cause)
+
 
 class TableDoesNotExist(BigQueryError):
 
     def __init__(self):
-        super(TableDoesNotExist, self).__init__()
+        super(TableDoesNotExist, self).__init__(self)
 
 
 class GoogleAPIAuthConfig(object):
@@ -63,6 +71,7 @@ class GoogleAPIAuthConfig(object):
     noauth_local_webserver = False
     auth_host_port = [8080, 8090]
     auth_host_name = 'localhost'
+
 
 class GoogleAPIAuthHandler(object):
     """Handles all steps of Google API authentication."""
@@ -96,10 +105,11 @@ class GoogleAPIAuthHandler(object):
                 scope='https://www.googleapis.com/auth/bigquery')
 
             # Run flow to retrieve credentials
-            credentials = run_flow(flow=flow,
-                                   storage=storage,
-                                   flags=GoogleAPIAuthConfig,
-                                   http=http)
+            credentials = run_flow(
+                flow=flow,
+                storage=storage,
+                flags=GoogleAPIAuthConfig,
+                http=http)
 
         http = credentials.authorize(http)
 
@@ -124,7 +134,8 @@ class GoogleAPIAuthHandler(object):
         projects_list = projects_handler.list().execute()
 
         if projects_list['totalItems'] == 0:
-            raise APIConfigError()
+            # Was raise APIConfigError, but that doesn't exist
+            raise Exception()
         else:
             project_numeric_id = projects_list['projects'][0]['numericId']
 
@@ -154,23 +165,29 @@ class BigQueryCall(object):
         timeout_ms = 15000
         try:
             job_query_body = {
-                'configuration':{
+                'configuration': {
                     'query': {
                         'kind': 'bigquery#queryRequest',
                         'query': query_string,
-                        'timeoutMS': timeout_ms }}}
+                        'timeoutMS': timeout_ms
+                    }
+                }
+            }
 
-            query_request = self._authenticated_service.jobs().insert(projectId=self._project_id, body=job_query_body)
+            query_request = self._authenticated_service.jobs().insert(
+                projectId=self._project_id, body=job_query_body)
             query_response = query_request.execute()
             job_id = query_response['jobReference']['jobId']
 
             logger.info('Started query.')
 
-        except (HttpError, httplib.ResponseNotReady) as e:
+        except (HttpError, httplib.ResponseNotReady) as err:
             raise BigQueryCommunicationError(
-                'Failed to communicate with BigQuery', e)
+                'Failed to communicate with BigQuery', err)
 
-        return BigQueryCallHandler(self._authenticated_service, job_id, self._project_id)
+        return BigQueryCallHandler(self._authenticated_service, job_id,
+                                   self._project_id)
+
 
 class BigQueryCallHandler(object):
 
@@ -197,8 +214,8 @@ class BigQueryCallHandler(object):
                     ' be temporary, not bailing out.', caught_error)
                 return None
             if status is not None:
-                time_waiting = int((datetime.datetime.utcnow() -
-                                    start_time).total_seconds())
+                time_waiting = int(
+                    (datetime.datetime.utcnow() - start_time).total_seconds())
                 if status == 'RUNNING':
                     logger.info(
                         'Waiting for query to complete, spent %d seconds so '
@@ -218,25 +235,27 @@ class BigQueryCallHandler(object):
 
     def _collect_query_results(self):
         try:
-            response = self._job.getQueryResults(projectId=self._project_id, jobId=self._job_id).execute()
+            response = self._job.getQueryResults(
+                projectId=self._project_id, jobId=self._job_id).execute()
             response_tuple = tuplefy_response(response)
             logger.info('Received query results: %s', str(response_tuple))
             return response_tuple
-        except HttpError as e:
-            if e.resp.status == 404:
+        except HttpError as err:
+            if err.resp.status == 404:
                 raise TableDoesNotExist()
-            elif e.resp.status == 400:
-                raise BigQueryJobFailure(e.resp.status, e)
+            elif err.resp.status == 400:
+                raise BigQueryJobFailure(err.resp.status, err)
             else:
                 raise BigQueryCommunicationError(
-                    'Failed to communicate with BigQuery', e)
+                    'Failed to communicate with BigQuery', err)
+
 
 def _date_to_datetime(date):
     # date is in the format '2014-03-02'
     separated = str(date).split('-')
-    return datetime.date(year=int(separated[0]),
-                        month=int(separated[1]),
-                        day=int(separated[2]))
+    return datetime.date(
+        year=int(separated[0]), month=int(separated[1]), day=int(separated[2]))
+
 
 def _make_template(start_date, end_date):
     template = []
@@ -247,6 +266,7 @@ def _make_template(start_date, end_date):
         current = current + datetime.timedelta(1)
     return template
 
+
 def tuplefy_response(query_results):
     """Takes the BigQuery response and returns a simple to read tuple.
 
@@ -256,24 +276,24 @@ def tuplefy_response(query_results):
     """
     try:
         rows = query_results['rows']
-    except KeyError as e:
+    except KeyError as err:
         # if there are no rows, return a blank list
         if int(query_results['totalRows']) == 0:
             return []
         # for any other key errors, raise exception
         else:
-            raise BigQueryCommunicationError('Unknown BigQuery response', e)
+            raise BigQueryCommunicationError('Unknown BigQuery response', err)
 
     start_date = _date_to_datetime(rows[0]['f'][0]['v'])
     end_date = _date_to_datetime(rows[-1]['f'][0]['v'])
     values = _make_template(start_date, end_date)
 
+    # row format: {u'f': [{u'v': u'2014-01-01'}, {u'v': u'3'}, {u'v': u'0.4'}]}
     for row in rows:
-        # row format: {u'f': [{u'v': u'2014-01-01'}, {u'v': u'3'}, {u'v': u'0.4'}]}
         date = _date_to_datetime(row['f'][0]['v'])
         hour = int(row['f'][1]['v'])
 
-        index = (date-start_date).days*24 + hour
+        index = (date - start_date).days * 24 + hour
         none_tuple = values[index]
 
         assert none_tuple[0] == date and hour == none_tuple[1]

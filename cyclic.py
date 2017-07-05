@@ -38,7 +38,7 @@ SQUELCH_THRESHOLD = .001
 
 
 def _power_spike_at_24_hours(timeseries):
-  """Looks for the presence of a 24-hour cycles in the timeseries.
+    """Looks for the presence of a 24-hour cycles in the timeseries.
 
   Looks to see how much power there is under the frequency corresponding to
   24 hours. A relatively large amount of power there would mean that the
@@ -50,30 +50,30 @@ def _power_spike_at_24_hours(timeseries):
   Returns:
       True if a strong 24-hour signal was found, False otherwise
   """
-  if len(timeseries) < 24:
-    return False
+    if len(timeseries) < 24:
+        return False
 
-  # Perform an FFT
-  spectrum = numpy.fft.rfft(timeseries)
-  # Square the result to get the power curve
-  power = [abs(x)**2 for x in spectrum]
-  # Compare the value at the index corresponding to 24 hours to the average
-  # value. If it is more than SPIKE_RATIO times the average value, then we will
-  # count that as a a spike.
-  avg = numpy.average(power)
-  # Frequency at index N is N/len(array).  We want to find the power when the
-  # frequency is 1/24 (one event per 24 hours, aka "daily"), which means we
-  # need to look at index:
-  #   N/len(array) = 1/24
-  #           24*N = len(array)
-  #              N = len(array) / 24
-  day_index = int(len(timeseries) / 24.0)
-  return ((power[day_index] > SQUELCH_THRESHOLD) and
-          (power[day_index] / avg > SPIKE_RATIO))
+    # Perform an FFT
+    spectrum = numpy.fft.rfft(timeseries)
+    # Square the result to get the power curve
+    power = [abs(x)**2 for x in spectrum]
+    # Compare the value at the index corresponding to 24 hours to the average
+    # value. If it is more than SPIKE_RATIO times the average value, then we
+    # will count that as a a spike.
+    avg = numpy.average(power)
+    # Frequency at index N is N/len(array).  We want to find the power when the
+    # frequency is 1/24 (one event per 24 hours, aka "daily"), which means we
+    # need to look at index:
+    #   N/len(array) = 1/24
+    #           24*N = len(array)
+    #              N = len(array) / 24
+    day_index = int(len(timeseries) / 24.0)
+    return ((power[day_index] > SQUELCH_THRESHOLD) and
+            (power[day_index] / avg > SPIKE_RATIO))
 
 
 def find_problems(timeseries):
-  """Discover any problems relating to cyclic patterns in the data.
+    """Discover any problems relating to cyclic patterns in the data.
 
   Args:
       timeseries: the data read from MLab BigQuery
@@ -81,28 +81,30 @@ def find_problems(timeseries):
   Returns:
       a list of CycleProblems, possibly empty
   """
-  problems_found = []
-  for netblock, series in timeseries.iteritems():
-    duration = datetime.timedelta(hours=len(series))
-    for metric, metric_name in [('upload_speed', 'Upload speeds'),
-                                ('download_speed', 'Download speeds'),
-                                ('min_latency', 'Round-trip times')]:
-      field_index = series[0]._fields.index(metric)
-      assert field_index >= 0, 'Bad metric name %s' % metric
-      single_metric_series = [d[field_index] for d in series]
-      if _power_spike_at_24_hours(single_metric_series):
-        problems_found.append(CycleProblem(netblock, duration, metric_name))
-  return problems_found
+    problems_found = []
+    for netblock, series in timeseries.iteritems():
+        duration = datetime.timedelta(hours=len(series))
+        for metric, metric_name in [('upload_speed', 'Upload speeds'),
+                                    ('download_speed', 'Download speeds'),
+                                    ('min_latency', 'Round-trip times')]:
+            field_index = series[0]._fields.index(metric)
+            assert field_index >= 0, 'Bad metric name %s' % metric
+            single_metric_series = [d[field_index] for d in series]
+            if _power_spike_at_24_hours(single_metric_series):
+                problems_found.append(
+                    CycleProblem(netblock, duration, metric_name))
+    return problems_found
 
 
 class CycleProblem(report.Problem):
-  """A report for the discovery of cyclic performance characteristics."""
-  priority = 4  # all CycleProblems have the same priority for now
+    """A report for the discovery of cyclic performance characteristics."""
+    priority = 4  # all CycleProblems have the same priority for now
 
-  def __init__(self, netblock, duration, metric):
-    message = ('%s are fluctuating on a 24-hour cycle. This is frequently a '
-               'leading indicator of congestion, and suggests that at least '
-               'part of the network in question is underprovisioned for its '
-               'peak load') % metric
-    super(CycleProblem, self).__init__(netblock, duration,
-                                       CycleProblem.priority, message)
+    def __init__(self, netblock, duration, metric):
+        message = (
+            '%s are fluctuating on a 24-hour cycle. This is frequently a '
+            'leading indicator of congestion, and suggests that at least '
+            'part of the network in question is underprovisioned for its '
+            'peak load') % metric
+        super(CycleProblem, self).__init__(netblock, duration,
+                                           CycleProblem.priority, message)
