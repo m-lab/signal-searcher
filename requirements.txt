@@ -1,6 +1,7 @@
 dateparser
-google-cloud-bigtable
-google-cloud-core
+google-api-python-client == 0.25.*
+google-cloud-bigtable == 0.25.*
+google-cloud-core == 0.25.*
 httplib2
 netaddr
 numpy
