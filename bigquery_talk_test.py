@@ -276,103 +276,19 @@ class TuplefyResponseTest(unittest.TestCase):
 
     def test_tuplefy_response_complete_but_offset_data(self):
         data = {
-            'rows': [{
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '3'
-                }, {
-                    'v': '0.3'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '4'
-                }, {
-                    'v': '0.4'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '5'
-                }, {
-                    'v': '0.5'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '6'
-                }, {
-                    'v': '0.6'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '7'
-                }, {
-                    'v': '0.7'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '8'
-                }, {
-                    'v': '0.8'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '9'
-                }, {
-                    'v': '0.9'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '10'
-                }, {
-                    'v': '0.10'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '11'
-                }, {
-                    'v': '0.11'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '12'
-                }, {
-                    'v': '0.12'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '13'
-                }, {
-                    'v': '0.13'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-01'
-                }, {
-                    'v': '14'
-                }, {
-                    'v': '0.14'
-                }]
-            }]
+            'rows': [
+                {'f': [{'v': '2014-01-01'}, {'v': '3'}, {'v': '0.3'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '4'}, {'v': '0.4'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '5'}, {'v': '0.5'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '6'}, {'v': '0.6'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '7'}, {'v': '0.7'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '8'}, {'v': '0.8'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '9'}, {'v': '0.9'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '10'}, {'v': '0.10'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '11'}, {'v': '0.11'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '12'}, {'v': '0.12'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '13'}, {'v': '0.13'}]},
+                {'f': [{'v': '2014-01-01'}, {'v': '14'}, {'v': '0.14'}]}]
         }
 
         actual = bigquery_talk.tuplefy_response(data)
@@ -383,57 +299,35 @@ class TuplefyResponseTest(unittest.TestCase):
             (datetime.date(2014, 1, 1), 3, 0.3),
             (datetime.date(2014, 1, 1), 4, 0.4),
             (datetime.date(2014, 1, 1), 5, 0.5),
-            (datetime.date(2014, 1, 1), 6, 0.6), (datetime.date(
-                2014, 1, 1), 7, 0.7), (datetime.date(2014, 1, 1), 8, 0.8),
-            (datetime.date(2014, 1, 1), 9, 0.9), (datetime.date(
-                2014, 1, 1), 10, 0.1), (datetime.date(2014, 1, 1), 11, 0.11),
-            (datetime.date(2014, 1, 1), 12, 0.12), (datetime.date(
-                2014, 1, 1), 13, 0.13), (datetime.date(2014, 1, 1), 14, 0.14),
-            (datetime.date(2014, 1, 1), 15, None), (datetime.date(
-                2014, 1, 1), 16, None), (datetime.date(2014, 1, 1), 17, None),
-            (datetime.date(2014, 1, 1), 18, None), (datetime.date(
-                2014, 1, 1), 19, None), (datetime.date(2014, 1, 1), 20, None),
-            (datetime.date(2014, 1, 1), 21, None), (datetime.date(
-                2014, 1, 1), 22, None), (datetime.date(2014, 1, 1), 23, None)
+            (datetime.date(2014, 1, 1), 6, 0.6),
+            (datetime.date(2014, 1, 1), 7, 0.7),
+            (datetime.date(2014, 1, 1), 8, 0.8),
+            (datetime.date(2014, 1, 1), 9, 0.9),
+            (datetime.date(2014, 1, 1), 10, 0.1),
+            (datetime.date(2014, 1, 1), 11, 0.11),
+            (datetime.date(2014, 1, 1), 12, 0.12),
+            (datetime.date(2014, 1, 1), 13, 0.13),
+            (datetime.date(2014, 1, 1), 14, 0.14),
+            (datetime.date(2014, 1, 1), 15, None),
+            (datetime.date(2014, 1, 1), 16, None),
+            (datetime.date(2014, 1, 1), 17, None),
+            (datetime.date(2014, 1, 1), 18, None), 
+            (datetime.date(2014, 1, 1), 19, None), 
+            (datetime.date(2014, 1, 1), 20, None),
+            (datetime.date(2014, 1, 1), 21, None), 
+            (datetime.date(2014, 1, 1), 22, None), 
+            (datetime.date(2014, 1, 1), 23, None)
         ]
 
         self.assertListEqual(actual, expected)
 
     def test_tuplefy_response_incomplete_data_skipping_a_full_day(self):
         data = {
-            'rows': [{
-                'f': [{
-                    'v': '2014-01-04'
-                }, {
-                    'v': '3'
-                }, {
-                    'v': '4.3'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-04'
-                }, {
-                    'v': '19'
-                }, {
-                    'v': '4.19'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-06'
-                }, {
-                    'v': '11'
-                }, {
-                    'v': '6.11'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-06'
-                }, {
-                    'v': '13'
-                }, {
-                    'v': '6.13'
-                }]
-            }]
+            'rows': [
+                {'f': [{'v': '2014-01-04'}, {'v': '3'}, {'v': '4.3'}]},
+                {'f': [{'v': '2014-01-04'}, {'v': '19'}, {'v': '4.19'}]},
+                {'f': [{'v': '2014-01-06'}, {'v': '11'}, {'v': '6.11'}]},
+                {'f': [{'v': '2014-01-06'}, {'v': '13'}, {'v': '6.13'}]}]
         }
 
         expected = [
@@ -443,50 +337,72 @@ class TuplefyResponseTest(unittest.TestCase):
             (datetime.date(2014, 1, 4), 3, 4.3),
             (datetime.date(2014, 1, 4), 4, None),
             (datetime.date(2014, 1, 4), 5, None),
-            (datetime.date(2014, 1, 4), 6, None), (datetime.date(
-                2014, 1, 4), 7, None), (datetime.date(2014, 1, 4), 8, None),
-            (datetime.date(2014, 1, 4), 9, None), (datetime.date(
-                2014, 1, 4), 10, None), (datetime.date(2014, 1, 4), 11, None),
-            (datetime.date(2014, 1, 4), 12, None), (datetime.date(
-                2014, 1, 4), 13, None), (datetime.date(2014, 1, 4), 14, None),
-            (datetime.date(2014, 1, 4), 15, None), (datetime.date(
-                2014, 1, 4), 16, None), (datetime.date(2014, 1, 4), 17, None),
-            (datetime.date(2014, 1, 4), 18, None), (datetime.date(
-                2014, 1, 4), 19, 4.19), (datetime.date(2014, 1, 4), 20, None),
-            (datetime.date(2014, 1, 4), 21, None), (datetime.date(
-                2014, 1, 4), 22, None), (datetime.date(2014, 1, 4), 23, None),
-            (datetime.date(2014, 1, 5), 0, None), (datetime.date(
-                2014, 1, 5), 1, None), (datetime.date(2014, 1, 5), 2, None),
-            (datetime.date(2014, 1, 5), 3, None), (datetime.date(
-                2014, 1, 5), 4, None), (datetime.date(2014, 1, 5), 5, None),
-            (datetime.date(2014, 1, 5), 6, None), (datetime.date(
-                2014, 1, 5), 7, None), (datetime.date(2014, 1, 5), 8, None),
-            (datetime.date(2014, 1, 5), 9, None), (datetime.date(
-                2014, 1, 5), 10, None), (datetime.date(2014, 1, 5), 11, None),
-            (datetime.date(2014, 1, 5), 12, None), (datetime.date(
-                2014, 1, 5), 13, None), (datetime.date(2014, 1, 5), 14, None),
-            (datetime.date(2014, 1, 5), 15, None), (datetime.date(
-                2014, 1, 5), 16, None), (datetime.date(2014, 1, 5), 17, None),
-            (datetime.date(2014, 1, 5), 18, None), (datetime.date(
-                2014, 1, 5), 19, None), (datetime.date(2014, 1, 5), 20, None),
-            (datetime.date(2014, 1, 5), 21, None), (datetime.date(
-                2014, 1, 5), 22, None), (datetime.date(2014, 1, 5), 23, None),
-            (datetime.date(2014, 1, 6), 0, None), (datetime.date(
-                2014, 1, 6), 1, None), (datetime.date(2014, 1, 6), 2, None),
-            (datetime.date(2014, 1, 6), 3, None), (datetime.date(
-                2014, 1, 6), 4, None), (datetime.date(2014, 1, 6), 5, None),
-            (datetime.date(2014, 1, 6), 6, None), (datetime.date(
-                2014, 1, 6), 7, None), (datetime.date(2014, 1, 6), 8, None),
-            (datetime.date(2014, 1, 6), 9, None), (datetime.date(
-                2014, 1, 6), 10, None), (datetime.date(2014, 1, 6), 11, 6.11),
-            (datetime.date(2014, 1, 6), 12, None), (datetime.date(
-                2014, 1, 6), 13, 6.13), (datetime.date(2014, 1, 6), 14, None),
-            (datetime.date(2014, 1, 6), 15, None), (datetime.date(
-                2014, 1, 6), 16, None), (datetime.date(2014, 1, 6), 17, None),
-            (datetime.date(2014, 1, 6), 18, None), (datetime.date(
-                2014, 1, 6), 19, None), (datetime.date(2014, 1, 6), 20, None),
-            (datetime.date(2014, 1, 6), 21, None), (datetime.date(
-                2014, 1, 6), 22, None), (datetime.date(2014, 1, 6), 23, None)
+            (datetime.date(2014, 1, 4), 6, None),
+            (datetime.date(2014, 1, 4), 7, None),
+            (datetime.date(2014, 1, 4), 8, None),
+            (datetime.date(2014, 1, 4), 9, None),
+            (datetime.date(2014, 1, 4), 10, None),
+            (datetime.date(2014, 1, 4), 11, None),
+            (datetime.date(2014, 1, 4), 12, None),
+            (datetime.date(2014, 1, 4), 13, None),
+            (datetime.date(2014, 1, 4), 14, None),
+            (datetime.date(2014, 1, 4), 15, None),
+            (datetime.date(2014, 1, 4), 16, None),
+            (datetime.date(2014, 1, 4), 17, None),
+            (datetime.date(2014, 1, 4), 18, None),
+            (datetime.date(2014, 1, 4), 19, 4.19),
+            (datetime.date(2014, 1, 4), 20, None),
+            (datetime.date(2014, 1, 4), 21, None),
+            (datetime.date(2014, 1, 4), 22, None),
+            (datetime.date(2014, 1, 4), 23, None),
+            (datetime.date(2014, 1, 5), 0, None),
+            (datetime.date(2014, 1, 5), 1, None),
+            (datetime.date(2014, 1, 5), 2, None),
+            (datetime.date(2014, 1, 5), 3, None),
+            (datetime.date(2014, 1, 5), 4, None),
+            (datetime.date(2014, 1, 5), 5, None),
+            (datetime.date(2014, 1, 5), 6, None),
+            (datetime.date(2014, 1, 5), 7, None),
+            (datetime.date(2014, 1, 5), 8, None),
+            (datetime.date(2014, 1, 5), 9, None),
+            (datetime.date(2014, 1, 5), 10, None),
+            (datetime.date(2014, 1, 5), 11, None),
+            (datetime.date(2014, 1, 5), 12, None),
+            (datetime.date(2014, 1, 5), 13, None),
+            (datetime.date(2014, 1, 5), 14, None),
+            (datetime.date(2014, 1, 5), 15, None),
+            (datetime.date(2014, 1, 5), 16, None),
+            (datetime.date(2014, 1, 5), 17, None),
+            (datetime.date(2014, 1, 5), 18, None),
+            (datetime.date(2014, 1, 5), 19, None),
+            (datetime.date(2014, 1, 5), 20, None),
+            (datetime.date(2014, 1, 5), 21, None),
+            (datetime.date(2014, 1, 5), 22, None),
+            (datetime.date(2014, 1, 5), 23, None),
+            (datetime.date(2014, 1, 6), 0, None),
+            (datetime.date(2014, 1, 6), 1, None),
+            (datetime.date(2014, 1, 6), 2, None),
+            (datetime.date(2014, 1, 6), 3, None),
+            (datetime.date(2014, 1, 6), 4, None),
+            (datetime.date(2014, 1, 6), 5, None),
+            (datetime.date(2014, 1, 6), 6, None),
+            (datetime.date(2014, 1, 6), 7, None),
+            (datetime.date(2014, 1, 6), 8, None),
+            (datetime.date(2014, 1, 6), 9, None),
+            (datetime.date(2014, 1, 6), 10, None),
+            (datetime.date(2014, 1, 6), 11, 6.11),
+            (datetime.date(2014, 1, 6), 12, None),
+            (datetime.date(2014, 1, 6), 13, 6.13),
+            (datetime.date(2014, 1, 6), 14, None),
+            (datetime.date(2014, 1, 6), 15, None),
+            (datetime.date(2014, 1, 6), 16, None),
+            (datetime.date(2014, 1, 6), 17, None),
+            (datetime.date(2014, 1, 6), 18, None),
+            (datetime.date(2014, 1, 6), 19, None),
+            (datetime.date(2014, 1, 6), 20, None),
+            (datetime.date(2014, 1, 6), 21, None),
+            (datetime.date(2014, 1, 6), 22, None),
+            (datetime.date(2014, 1, 6), 23, None)
         ]
 
         actual = bigquery_talk.tuplefy_response(data)
@@ -494,55 +410,13 @@ class TuplefyResponseTest(unittest.TestCase):
 
     def test_tuplefy_response_incomplete_data_with_gaps_at_the_day_border(self):
         data = {
-            'rows': [{
-                'f': [{
-                    'v': '2014-01-04'
-                }, {
-                    'v': '3'
-                }, {
-                    'v': '4.3'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-04'
-                }, {
-                    'v': '19'
-                }, {
-                    'v': '4.19'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-04'
-                }, {
-                    'v': '23'
-                }, {
-                    'v': '4.23'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-05'
-                }, {
-                    'v': '11'
-                }, {
-                    'v': '5.11'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-05'
-                }, {
-                    'v': '14'
-                }, {
-                    'v': '5.14'
-                }]
-            }, {
-                'f': [{
-                    'v': '2014-01-05'
-                }, {
-                    'v': '19'
-                }, {
-                    'v': '5.19'
-                }]
-            }]
+            'rows': [
+                {'f': [{'v': '2014-01-04'}, {'v': '3'}, {'v': '4.3'}]},
+                {'f': [{'v': '2014-01-04'}, {'v': '19'}, {'v': '4.19'}]},
+                {'f': [{'v': '2014-01-04'}, {'v': '23'}, {'v': '4.23'}]},
+                {'f': [{'v': '2014-01-05'}, {'v': '11'}, {'v': '5.11'}]},
+                {'f': [{'v': '2014-01-05'}, {'v': '14'}, {'v': '5.14'}]},
+                {'f': [{'v': '2014-01-05'}, {'v': '19'}, {'v': '5.19'}]}]
         }
 
         actual = bigquery_talk.tuplefy_response(data)
@@ -554,34 +428,48 @@ class TuplefyResponseTest(unittest.TestCase):
             (datetime.date(2014, 1, 4), 3, 4.3),
             (datetime.date(2014, 1, 4), 4, None),
             (datetime.date(2014, 1, 4), 5, None),
-            (datetime.date(2014, 1, 4), 6, None), (datetime.date(
-                2014, 1, 4), 7, None), (datetime.date(2014, 1, 4), 8, None),
-            (datetime.date(2014, 1, 4), 9, None), (datetime.date(
-                2014, 1, 4), 10, None), (datetime.date(2014, 1, 4), 11, None),
-            (datetime.date(2014, 1, 4), 12, None), (datetime.date(
-                2014, 1, 4), 13, None), (datetime.date(2014, 1, 4), 14, None),
-            (datetime.date(2014, 1, 4), 15, None), (datetime.date(
-                2014, 1, 4), 16, None), (datetime.date(2014, 1, 4), 17, None),
-            (datetime.date(2014, 1, 4), 18, None), (datetime.date(
-                2014, 1, 4), 19, 4.19), (datetime.date(2014, 1, 4), 20, None),
-            (datetime.date(2014, 1, 4), 21, None), (datetime.date(
-                2014, 1, 4), 22, None), (datetime.date(2014, 1, 4), 23, 4.23),
-            (datetime.date(2014, 1, 5), 0, None), (datetime.date(
-                2014, 1, 5), 1, None), (datetime.date(2014, 1, 5), 2, None),
-            (datetime.date(2014, 1, 5), 3, None), (datetime.date(
-                2014, 1, 5), 4, None), (datetime.date(2014, 1, 5), 5, None),
-            (datetime.date(2014, 1, 5), 6, None), (datetime.date(
-                2014, 1, 5), 7, None), (datetime.date(2014, 1, 5), 8, None),
-            (datetime.date(2014, 1, 5), 9, None), (datetime.date(
-                2014, 1, 5), 10, None), (datetime.date(2014, 1, 5), 11, 5.11),
-            (datetime.date(2014, 1, 5), 12, None), (datetime.date(
-                2014, 1, 5), 13, None), (datetime.date(2014, 1, 5), 14, 5.14),
-            (datetime.date(2014, 1, 5), 15, None), (datetime.date(
-                2014, 1, 5), 16, None), (datetime.date(2014, 1, 5), 17, None),
-            (datetime.date(2014, 1, 5), 18, None), (datetime.date(
-                2014, 1, 5), 19, 5.19), (datetime.date(2014, 1, 5), 20, None),
-            (datetime.date(2014, 1, 5), 21, None), (datetime.date(
-                2014, 1, 5), 22, None), (datetime.date(2014, 1, 5), 23, None)
+            (datetime.date(2014, 1, 4), 6, None),
+            (datetime.date(2014, 1, 4), 7, None),
+            (datetime.date(2014, 1, 4), 8, None),
+            (datetime.date(2014, 1, 4), 9, None),
+            (datetime.date(2014, 1, 4), 10, None),
+            (datetime.date(2014, 1, 4), 11, None),
+            (datetime.date(2014, 1, 4), 12, None),
+            (datetime.date(2014, 1, 4), 13, None),
+            (datetime.date(2014, 1, 4), 14, None),
+            (datetime.date(2014, 1, 4), 15, None),
+            (datetime.date(2014, 1, 4), 16, None),
+            (datetime.date(2014, 1, 4), 17, None),
+            (datetime.date(2014, 1, 4), 18, None),
+            (datetime.date(2014, 1, 4), 19, 4.19),
+            (datetime.date(2014, 1, 4), 20, None),
+            (datetime.date(2014, 1, 4), 21, None),
+            (datetime.date(2014, 1, 4), 22, None),
+            (datetime.date(2014, 1, 4), 23, 4.23),
+            (datetime.date(2014, 1, 5), 0, None),
+            (datetime.date(2014, 1, 5), 1, None),
+            (datetime.date(2014, 1, 5), 2, None),
+            (datetime.date(2014, 1, 5), 3, None),
+            (datetime.date(2014, 1, 5), 4, None),
+            (datetime.date(2014, 1, 5), 5, None),
+            (datetime.date(2014, 1, 5), 6, None),
+            (datetime.date(2014, 1, 5), 7, None),
+            (datetime.date(2014, 1, 5), 8, None),
+            (datetime.date(2014, 1, 5), 9, None),
+            (datetime.date(2014, 1, 5), 10, None),
+            (datetime.date(2014, 1, 5), 11, 5.11),
+            (datetime.date(2014, 1, 5), 12, None),
+            (datetime.date(2014, 1, 5), 13, None),
+            (datetime.date(2014, 1, 5), 14, 5.14),
+            (datetime.date(2014, 1, 5), 15, None),
+            (datetime.date(2014, 1, 5), 16, None),
+            (datetime.date(2014, 1, 5), 17, None),
+            (datetime.date(2014, 1, 5), 18, None),
+            (datetime.date(2014, 1, 5), 19, 5.19),
+            (datetime.date(2014, 1, 5), 20, None),
+            (datetime.date(2014, 1, 5), 21, None),
+            (datetime.date(2014, 1, 5), 22, None),
+            (datetime.date(2014, 1, 5), 23, None)
         ]
 
         self.assertListEqual(actual, expected)
