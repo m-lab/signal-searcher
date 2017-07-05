@@ -1,5 +1,4 @@
 dateparser
-google-api-python-client
 google-cloud-bigtable
 google-cloud-core
 httplib2
