@@ -1,5 +1,5 @@
 dateparser
-google-api-python-client == 0.25.*
+google-api-python-client == 1.5.*
 google-cloud-bigtable == 0.25.*
 google-cloud-core == 0.25.*
 httplib2
