@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
@@ -17,7 +16,6 @@
 # limitations under the License.
 
 import datetime
-import logging
 import netaddr
 import pytz
 
@@ -27,17 +25,20 @@ METRICS = ['download', 'upload', 'minimum_rtt']
 def unix_timestamp_to_utc_datetime(unix_timestamp):
     return datetime.datetime.fromtimestamp(unix_timestamp, tz=pytz.utc)
 
+
 def _seconds_to_microseconds(seconds):
     return seconds * 1000000
+
 
 def _is_server_to_client_metric(metric):
     return metric in ('download', 'minimum_rtt')
 
+
 def ipnetwork_to_iprange(ipnetwork):
     """Returns an ip range for a given netaddr.IPNetwork instance."""
     addr_tuple = ipnetwork.ip.words
-    prefix_i = ipnetwork.prefixlen/8
-    last_ip = ['255']*4
+    prefix_i = ipnetwork.prefixlen / 8
+    last_ip = ['255'] * 4
 
     for i in range(0, prefix_i):
         last_ip[i] = str(addr_tuple[i])
@@ -90,10 +91,11 @@ class QueryConditionals(object):
         self._conditional_dict['complete_tcp'] = (
             '(web100_log_entry.snap.State = {state_closed}\n'
             '\t\tOR (web100_log_entry.snap.State >= {state_established}\n'
-            '\t\t\tAND web100_log_entry.snap.State <= {state_time_wait}))').format(
-                state_closed=QueryConditionals.STATE_CLOSED,
-                state_established=QueryConditionals.STATE_ESTABLISHED,
-                state_time_wait=QueryConditionals.STATE_TIME_WAIT)
+            '\t\t\tAND web100_log_entry.snap.State <= {state_time_wait}))'
+        ).format(
+            state_closed=QueryConditionals.STATE_CLOSED,
+            state_established=QueryConditionals.STATE_ESTABLISHED,
+            state_time_wait=QueryConditionals.STATE_TIME_WAIT)
 
         # Add non metric specific conditions
         self._add_log_time_conditional(start_time, end_time)
@@ -101,9 +103,10 @@ class QueryConditionals(object):
 
     def _add_log_time_conditional(self, start_time_datetime, end_time_datetime):
         utc_absolutely_utc = unix_timestamp_to_utc_datetime(0)
-        start_time = int((start_time_datetime - utc_absolutely_utc
-                         ).total_seconds())
-        end_time = int((end_time_datetime - utc_absolutely_utc).total_seconds())
+        start_time = int(
+            (start_time_datetime - utc_absolutely_utc).total_seconds())
+        end_time = int(
+            (end_time_datetime - utc_absolutely_utc).total_seconds())
 
         new_statement = (
             '(web100_log_entry.log_time >= {start_time})'
@@ -122,8 +125,7 @@ class QueryConditionals(object):
         new_statement = (
             'PARSE_IP(web100_log_entry.connection_spec.remote_ip) BETWEEN '
             'PARSE_IP(\'{start_addr}\') AND PARSE_IP(\'{end_addr}\')').format(
-                start_addr=start_ip,
-                end_addr=end_ip)
+                start_addr=start_ip, end_addr=end_ip)
         self._conditional_dict['client_ip_block'] = new_statement
 
     def _create_metric_specific_dict(self, metric):
@@ -153,34 +155,44 @@ class QueryConditionals(object):
         if _is_server_to_client_metric(metric):
             # Must leave slow start phase of TCP, indicated by reaching
             # congestion at least once.
-            valid_metric_conditional.append('web100_log_entry.snap.CongSignals > 0')
+            valid_metric_conditional.append(
+                'web100_log_entry.snap.CongSignals > 0')
             # Must send at least the minimum number of bytes.
-            valid_metric_conditional.append('web100_log_entry.snap.HCThruOctetsAcked >= %d' %
-                              QueryConditionals.MIN_BYTES)
+            valid_metric_conditional.append(
+                'web100_log_entry.snap.HCThruOctetsAcked >= %d' %
+                QueryConditionals.MIN_BYTES)
             # Must last for at least the minimum test duration.
             valid_metric_conditional.append(
                 ('(web100_log_entry.snap.SndLimTimeRwin +\n'
                  '\t\tweb100_log_entry.snap.SndLimTimeCwnd +\n'
-                 '\t\tweb100_log_entry.snap.SndLimTimeSnd) >= %u') % QueryConditionals.MIN_DURATION)
+                 '\t\tweb100_log_entry.snap.SndLimTimeSnd) >= %u') %
+                QueryConditionals.MIN_DURATION)
             # Must not exceed the maximum test duration.
             valid_metric_conditional.append(
                 ('(web100_log_entry.snap.SndLimTimeRwin +\n'
                  '\t\tweb100_log_entry.snap.SndLimTimeCwnd +\n'
-                 '\t\tweb100_log_entry.snap.SndLimTimeSnd) < %u') % QueryConditionals.MAX_DURATION)
+                 '\t\tweb100_log_entry.snap.SndLimTimeSnd) < %u') %
+                QueryConditionals.MAX_DURATION)
 
             # Exclude results of tests with fewer than 10 round trip time samples,
             # because there are not enough samples to accurately estimate the RTT.
             if metric == 'minimum_rtt':
                 valid_metric_conditional.append(
-                    'web100_log_entry.snap.CountRTT > %u' % QueryConditionals.MIN_RTT_SAMPLES)
+                    'web100_log_entry.snap.CountRTT > %u' %
+                    QueryConditionals.MIN_RTT_SAMPLES)
         else:
             # Must receive at least the minimum number of bytes.
             valid_metric_conditional.append(
-                'web100_log_entry.snap.HCThruOctetsReceived >= %u' % QueryConditionals.MIN_BYTES)
+                'web100_log_entry.snap.HCThruOctetsReceived >= %u' %
+                QueryConditionals.MIN_BYTES)
             # Must last for at least the minimum test duration.
-            valid_metric_conditional.append('web100_log_entry.snap.Duration >= %u' % QueryConditionals.MIN_DURATION)
+            valid_metric_conditional.append(
+                'web100_log_entry.snap.Duration >= %u' %
+                QueryConditionals.MIN_DURATION)
             # Must not exceed the maximum test duration.
-            valid_metric_conditional.append('web100_log_entry.snap.Duration < %u' % QueryConditionals.MAX_DURATION)
+            valid_metric_conditional.append(
+                'web100_log_entry.snap.Duration < %u' %
+                QueryConditionals.MAX_DURATION)
         metric_dict[metric] = '\n\tAND '.join(valid_metric_conditional)
         return metric_dict
 
@@ -195,7 +207,8 @@ class QueryConditionals(object):
 class SubQueryGenerator(object):
 
     def __init__(self, metric, start_time, end_time, client_ip_block):
-        self._conditionals = QueryConditionals(start_time, end_time, client_ip_block).get_conditional_dict(metric)
+        self._conditionals = QueryConditionals(
+            start_time, end_time, client_ip_block).get_conditional_dict(metric)
         self._metric = metric
         self._query = self._create_query_string()
 
@@ -205,11 +218,11 @@ class SubQueryGenerator(object):
 
     def _create_query_string(self):
         built_query_format = ('SELECT\n'
-                                '\t{select_clauses}\n'
+                              '\t{select_clauses}\n'
                               'FROM\n'
-                                '\t{table}\n'
+                              '\t{table}\n'
                               'WHERE\n'
-                                '\t{conditional_list}')
+                              '\t{conditional_list}')
 
         conditional_list_string = ''
         conditional_list_string += self._conditionals['data_direction']
@@ -227,26 +240,28 @@ class SubQueryGenerator(object):
         return built_query_string
 
     def _create_select_clauses(self, metric):
-        select_format = ('web100_log_entry.log_time AS timestamp,\n'
+        select_format = (
+            'web100_log_entry.log_time AS timestamp,\n'
             '\tDATE(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS date,'
             '\tHOUR(SEC_TO_TIMESTAMP(web100_log_entry.log_time)) AS hour, \n'
             '{metric_select}')
 
         if metric == 'download':
-          return select_format.format(metric_select=(
-            '\t8 * (web100_log_entry.snap.HCThruOctetsAcked /\n'
-            '\t\t(web100_log_entry.snap.SndLimTimeRwin +\n'
-            '\t\t web100_log_entry.snap.SndLimTimeCwnd +\n'
-            '\t\t web100_log_entry.snap.SndLimTimeSnd)) AS download_mbps'))
+            return select_format.format(metric_select=(
+                '\t8 * (web100_log_entry.snap.HCThruOctetsAcked /\n'
+                '\t\t(web100_log_entry.snap.SndLimTimeRwin +\n'
+                '\t\t web100_log_entry.snap.SndLimTimeCwnd +\n'
+                '\t\t web100_log_entry.snap.SndLimTimeSnd)) AS download_mbps'))
         elif metric == 'upload':
-          return select_format.format(metric_select=(
-            '\t8 * (web100_log_entry.snap.HCThruOctetsReceived /\n'
-            '\t\t web100_log_entry.snap.Duration) AS upload_mbps'))
+            return select_format.format(metric_select=(
+                '\t8 * (web100_log_entry.snap.HCThruOctetsReceived /\n'
+                '\t\t web100_log_entry.snap.Duration) AS upload_mbps'))
         elif metric == 'minimum_rtt':
-           return select_format.format(metric_select=(
+            return select_format.format(metric_select=(
                 '\tweb100_log_entry.snap.MinRTT AS minimum_rtt_ms'))
         else:
-           raise ValueError('bad metric: ' + metric)
+            raise ValueError('bad metric: ' + metric)
+
 
 def build_metric_median_query(metric, start_time, end_time, client_ip_block):
     """Builds a query to calculate the median of a metric by time and ip block.
@@ -261,11 +276,11 @@ def build_metric_median_query(metric, start_time, end_time, client_ip_block):
         String representation of a query.
     """
     built_query_format = ('SELECT\n'
-                            '\tdate,\n'
-                            '\thour,\n'
-                            '\t{median_select}\n'
+                          '\tdate,\n'
+                          '\thour,\n'
+                          '\t{median_select}\n'
                           'FROM\n'
-                            '\t{subquery_table}\n'
+                          '\t{subquery_table}\n'
                           'GROUP BY date, hour\n'
                           'ORDER BY date, hour')
 
@@ -273,9 +288,11 @@ def build_metric_median_query(metric, start_time, end_time, client_ip_block):
     subquery_string = '(%s)' % subquery.query
 
     if metric == 'minimum_rtt':
-        metric_with_unit = metric+'_ms'
+        metric_with_unit = metric + '_ms'
     else:
-        metric_with_unit = metric+'_mbps'
-    select = 'NTH( 51, QUANTILES({m}, 101)) AS hourly_median_{m}'.format(m=metric_with_unit)
+        metric_with_unit = metric + '_mbps'
+    select = 'NTH( 51, QUANTILES({m}, 101)) AS hourly_median_{m}'.format(
+        m=metric_with_unit)
 
-    return built_query_format.format(median_select=select, subquery_table=subquery_string)
+    return built_query_format.format(
+        median_select=select, subquery_table=subquery_string)

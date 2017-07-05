@@ -73,8 +73,8 @@ def parse_key_and_data(key, data, table_name):
     rtt = struct.unpack('>d', rtt)[0]
     samples = int(data['data:count'][0].value)
     return key_no_date, InternetData(key=key_no_date, table=table_name,
-            time=date, download=download, upload=upload, rtt=rtt,
-            samples=samples)
+                                     time=date, download=download,
+                                     upload=upload, rtt=rtt, samples=samples)
 
 
 def read_each_stream(table_name):
@@ -85,6 +85,10 @@ def read_each_stream(table_name):
         while True:
             try:
                 response.consume_next()
+            # pylint: disable=protected-access
+            # Ideally, the grpc libraries would not surface a private exception
+            # here. But since they do, we must handle it, even though pylint
+            # thinks we are accessing private variables.
             except grpc._channel._Rendezvous as err:
                 logging.warning('Could no consume_next: %s, assuming error '
                                 'was transient and reconnecting.', err)
@@ -92,6 +96,7 @@ def read_each_stream(table_name):
                 data = []
                 key_no_date = None
                 continue
+            # pylint: enable=protected-access
             for key in sorted(response.rows):
                 row = response.rows[key].to_dict()
                 new_key, entry = parse_key_and_data(key, row, table_name)
@@ -129,7 +134,7 @@ def percent_change_to_severity(percent, metric):
         else:
             return 0
     else:
-        print "Unknown metric", metric
+        print 'Unknown metric', metric
 
 
 def problem_to_url(problem):
@@ -155,7 +160,7 @@ def problem_to_url(problem):
         assert False, 'Bad table: ' + problem.table
 
     return ('http://viz.measurementlab.net/compare/%s?' % comparison) + \
-            ('&'.join(str(k) + '=' + str(v) for (k, v) in args.items()))
+        ('&'.join(str(k) + '=' + str(v) for (k, v) in args.items()))
 
 
 def find_slope_problems(single_metric_series, metric):
@@ -166,13 +171,15 @@ def find_slope_problems(single_metric_series, metric):
             avg = numpy.mean(chunk)
             expected_loss = 365 * slope
             expected_percent_loss = expected_loss * 100.0 / avg
-            severity = percent_change_to_severity(expected_percent_loss, metric)
+            severity = percent_change_to_severity(
+                expected_percent_loss, metric)
             if severity == SEVERE:
                 yield IntermediateProblem(i, i + 365, metric, severity)
 
 
 ONEYEAR = 365
 TWOYEARS = 2 * ONEYEAR
+
 
 def find_year_over_year_problems(single_metric_series, metric):
     previous_year = sum(single_metric_series[:ONEYEAR])
@@ -194,10 +201,10 @@ def analyze_stream(key, data, method=find_slope_problems):
         return
     problems_found = []
     for metric, _metric_name in [
-            ('download', 'Download speeds'),
-            #('upload', 'Upload speeds'),
-            #('rtt', 'Round-trip times'),
-            ]:
+        ('download', 'Download speeds'),
+        #('upload', 'Upload speeds'),
+        #('rtt', 'Round-trip times'),
+    ]:
         field_index = data[0]._fields.index(metric)
         assert field_index >= 0, 'Bad metric name %s' % metric
         single_metric_series = [d[field_index] for d in data]
