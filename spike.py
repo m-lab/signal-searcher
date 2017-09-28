@@ -78,7 +78,7 @@ def parse_key_and_data(key, data, table_name):
 
 
 def read_each_stream(table_name):
-    response = connect_to_table(table_name)
+    response = connect_to_table(table_name, 'naus')  # TODO: remove second arg
     data = []
     key_no_date = None
     try:
@@ -155,6 +155,13 @@ def problem_to_url(problem):
         comparison = 'location'
         asn, loc = problem.key.split('|')
         args['filter1'] = asn.strip()
+        args['selected'] = loc.strip()
+    elif problem.table == 'server_asn_client_asn_client_loc_by_day':
+        # http://viz.measurementlab.net/compare/location?filter1=AS10796x&filter2=AS174&selected=nausnynewyork
+        comparison = 'location'
+        loc, asnClient, asnServer= problem.key.split('|')
+        args['filter1'] = asnClient.strip()
+        args['filter2'] = asnServer.strip()
         args['selected'] = loc.strip()
     else:
         assert False, 'Bad table: ' + problem.table
@@ -246,11 +253,11 @@ def main(_args):
     # Read each timestream
     for table in (
             #'client_asn_by_day',
-            'client_asn_client_loc_by_day',
+            #'client_asn_client_loc_by_day',
             #'client_loc_by_day',
             #'server_asn_by_day',
             #'server_asn_client_asn_by_day',
-            #'server_asn_client_asn_client_loc_by_day',
+            'server_asn_client_asn_client_loc_by_day',
             #'server_asn_client_loc_by_day',
     ):
         for key, data in read_each_stream(table):
