@@ -34,20 +34,49 @@ InternetData = collections.namedtuple(
     ['key', 'table', 'time', 'upload', 'download', 'rtt', 'samples'])
 
 
-def read_timeseries(table, _start, _end, credentials):
+def read_timeseries(table_name, _start=None, _end=None):
     #Valid table names:
-    assert table in ['client_asn_by_day',
-                     'client_asn_client_loc_by_day',
-                     'client_loc_by_day',
-                     'server_asn_by_day',
-                     'server_asn_client_asn_by_day',
-                     'server_asn_client_asn_client_loc_by_day',
-                     'server_asn_client_loc_by_day']
-    for pair in _read_each_stream(table):
-        yield pair
+    assert table_name in ['client_asn_by_day',
+                          'client_asn_client_loc_by_day',
+                          'client_loc_by_day',
+                          'server_asn_by_day',
+                          'server_asn_client_asn_by_day',
+                          'server_asn_client_asn_client_loc_by_day',
+                          'server_asn_client_loc_by_day']
+    response = _connect_to_table(table_name)
+    data = []
+    key_no_date = None
+    try:
+        while True:
+            try:
+                response.consume_next()
+            except grpc.RpcError as err:
+                logging.warning('Could not consume_next: %s, assuming error '
+                                'was transient and reconnecting.', err)
+                response = _connect_to_table(table_name, key_no_date)
+                data = []
+                key_no_date = None
+                continue
+            for key in sorted(response.rows):
+                row = response.rows[key].to_dict()
+                new_key, entry = _parse_key_and_data(key, row, table_name)
+                if new_key is None or entry is None:
+                    continue
+                if new_key != key_no_date:
+                    if key_no_date and data:
+                        yield key_no_date, data
+                    key_no_date = new_key
+                    data = []
+                data.append(entry)
+
+            response.rows.clear()
+    except StopIteration:
+        pass
+    if key_no_date:
+        yield key_no_date, data
 
 
-def _connect_to_table(name, start_key=None):
+def _connect_to_table(name, start_key=None):  # pragma: no cover
     client = bigtable.Client(project='mlab-oti', admin=False)
     # TODO: verify that the permissions on this table are correct
     instance = client.instance('mlab-data-viz-prod')
@@ -64,7 +93,11 @@ def _parse_key(key):
         logging.warning('bad date in key "%s"', key)
         return None, None
     year, month, day = date.split('-')
-    date = datetime.date(int(year, 10), int(month, 10), int(day, 10))
+    try:
+        date = datetime.date(int(year, 10), int(month, 10), int(day, 10))
+    except ValueError as verr:
+        logging.warning('ValueError: %s (%s)', verr, key)
+        return None, None
     return key_no_date, date
 
 
@@ -89,41 +122,3 @@ def _parse_key_and_data(key, data, table_name):
     return key_no_date, InternetData(key=key_no_date, table=table_name,
                                      time=date, download=download,
                                      upload=upload, rtt=rtt, samples=samples)
-
-
-def _read_each_stream(table_name):
-    response = _connect_to_table(table_name)
-    data = []
-    key_no_date = None
-    try:
-        while True:
-            try:
-                response.consume_next()
-            # Ideally the grpc libraries would not surface a private exception
-	    # here. But since they do, we must handle it, even though pylint
-	    # complains that we are accessing private variables.
-            # pylint: disable=protected-access
-            except grpc._channel._Rendezvous as err:
-                logging.warning('Could no consume_next: %s, assuming error '
-                                'was transient and reconnecting.', err)
-                response = _connect_to_table(table_name, key_no_date)
-                data = []
-                key_no_date = None
-                continue
-            # pylint: enable=protected-access
-            for key in sorted(response.rows):
-                row = response.rows[key].to_dict()
-                new_key, entry = _parse_key_and_data(key, row, table_name)
-                if new_key is None or entry is None:
-                    continue
-                if new_key != key_no_date:
-                    yield key_no_date, data
-                    key_no_date = new_key
-                    data = []
-                data.append(entry)
-
-            response.rows.clear()
-    except StopIteration:
-        pass
-    if key_no_date:
-        yield key_no_date, data

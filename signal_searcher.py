@@ -112,8 +112,8 @@ def main(argv):  # pragma: no-cover
 
     # Read the data
     problems = []
-    for key, timeseries in btreader.read_timeseries(args.bigtable, args.start, args.end,
-                                                    args.credentials):
+    for key, timeseries in btreader.read_timeseries(args.bigtable, args.start,
+                                                    args.end):
         # Look for problems
         problems.extend(year_over_year.find_problems(key, timeseries))
 
