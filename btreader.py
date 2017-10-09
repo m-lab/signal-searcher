@@ -23,15 +23,11 @@ import logging
 import struct
 
 import grpc
+import mlabdata
 
 # pylint: disable=no-name-in-module
 from google.cloud import bigtable
 # pylint: enable=no-name-in-module
-
-
-InternetData = collections.namedtuple(
-    'InternetData',
-    ['key', 'table', 'time', 'upload', 'download', 'rtt', 'samples'])
 
 
 def read_timeseries(table_name, _start=None, _end=None):
@@ -119,6 +115,6 @@ def _parse_key_and_data(key, data, table_name):
     rtt = data['data:rtt_avg'][0].value
     rtt = struct.unpack('>d', rtt)[0]
     samples = int(data['data:count'][0].value)
-    return key_no_date, InternetData(key=key_no_date, table=table_name,
-                                     time=date, download=download,
-                                     upload=upload, rtt=rtt, samples=samples)
+    return key_no_date, mlabdata.InternetData(key=key_no_date,
+            table=table_name, time=date, download=download, upload=upload,
+            rtt=rtt, samples=samples)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2016 The MLab Signal Searcher Authors
+# Copyright 2017 The MLab Signal Searcher Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,13 +23,11 @@ import logging
 
 import numpy 
 
+from mlabdata import Problem
+
 
 IntermediateProblem = collections.namedtuple(
     'IntermediateProblem', ['start', 'end', 'metric', 'severity'])
-
-Problem = collections.namedtuple('Problem', [
-    'key', 'table', 'start_date', 'end_date', 'metric', 'severity', 'test_count'
-])
 
 
 ONEYEAR = 365
@@ -89,7 +87,7 @@ def _analyze_stream(key, data, analysis_method):
                        for x in problem_list) / float(len(problem_list))
         actual_problems.append(
             Problem(key.strip(), data[start].table, data[start].time, data[end]
-                    .time, problem_list[0].metric, severity, count))
+                    .time, severity, count, 'stuff dropped'))
     actual_problems = list(
         sorted(
             actual_problems, key=lambda x: x.severity * x.test_count))
