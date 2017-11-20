@@ -23,7 +23,7 @@ import mock
 
 import btreader
 
-def ValueArray(data):
+def valueArray(data):
     """Bigtable cells are lists where each element has a .value."""
     class ValueHaver(object):
         def __init__(self, d):
@@ -61,13 +61,15 @@ class FakeResponse(object):
                     return
             key = '%s | %s | %s' % (self.asns[self.asn_index], self.loc,
                                     str(self.current_date))
+            # pylint: disable=line-too-long
             self.rows[key] = FakeRow(
-                {'data:download_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:upload_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:rtt_avg': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:count': ValueArray('50')})
+                {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+                 'data:upload_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+                 'data:rtt_avg': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+                 'data:count': valueArray('50')})
+            # pylint: enable=line-too-long
             self.current_date += datetime.timedelta(days=1)
-        
+
 
 class BtReaderTest(unittest.TestCase):
     def test_parse_key(self):
@@ -91,14 +93,16 @@ class BtReaderTest(unittest.TestCase):
         self.assertEqual(date, None)
 
     def test_parse_key_and_data(self):
+        # pylint: disable=line-too-long
         key, data = btreader._parse_key_and_data(
-                'AS12 | nausny | 2017-08-09',
-                # Contains raw byte versions of doubles, just like bigtable.
-                {'data:download_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:upload_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:rtt_avg': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:count': ValueArray('50')},
-                'client_asn_client_loc_by_day')
+            'AS12 | nausny | 2017-08-09',
+            # Contains raw byte versions of doubles, just like bigtable.
+            {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:upload_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:rtt_avg': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:count': valueArray('50')},
+            'client_asn_client_loc_by_day')
+        # pylint: enable=line-too-long
         self.assertEqual(key, 'AS12 | nausny ')
         self.assertEqual(data.samples, 50)
         self.assertEqual(data.time, datetime.date(2017, 8, 9))
@@ -107,24 +111,28 @@ class BtReaderTest(unittest.TestCase):
         self.assertAlmostEqual(data.rtt, .865, 3)
 
     def test_parse_key_and_data_bad_key(self):
+        # pylint: disable=line-too-long
         key, data = btreader._parse_key_and_data(
-                'AS12',
-                # Contains raw byte versions of doubles, just like bigtable.
-                {'data:download_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:upload_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:rtt_avg': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:count': ValueArray('50')},
-                'client_asn_client_loc_by_day')
+            'AS12',
+            # Contains raw byte versions of doubles, just like bigtable.
+            {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:upload_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:rtt_avg': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:count': valueArray('50')},
+            'client_asn_client_loc_by_day')
+        # pylint: enable=line-too-long
         self.assertEqual(key, None)
         self.assertEqual(data, None)
 
     def test_parse_key_and_data_missing_fields(self):
+        # pylint: disable=line-too-long
         key, data = btreader._parse_key_and_data(
-                'AS12 | nausny | 2017-08-09',
-                # Contains raw byte versions of doubles, just like bigtable.
-                {'data:download_speed_mbps_median': ValueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:count': ValueArray('50')},
-                'client_asn_client_loc_by_day')
+            'AS12 | nausny | 2017-08-09',
+            # Contains raw byte versions of doubles, just like bigtable.
+            {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:count': valueArray('50')},
+            'client_asn_client_loc_by_day')
+        # pylint: enable=line-too-long
         self.assertEqual(key, None)
         self.assertEqual(data, None)
 
@@ -135,7 +143,7 @@ class BtReaderTest(unittest.TestCase):
         mock_connect.return_value = FakeResponse(['AS12', 'AS999'], 'nausny',
                                                  start_date, end_date)
         (key1, data1), (key2, data2) = list(
-                btreader.read_timeseries('client_asn_client_loc_by_day'))
+            btreader.read_timeseries('client_asn_client_loc_by_day'))
         self.assertEqual(key1, 'AS12 | nausny ')
         self.assertEqual(list(sorted(data1)), data1)
         self.assertEqual(key2, 'AS999 | nausny ')
