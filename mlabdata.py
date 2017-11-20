@@ -1,6 +1,6 @@
-import collections
-
 """All of the datatypes that get passed around inside Signal Searcher."""
+
+import collections
 
 InternetData = collections.namedtuple(
     'InternetData',
