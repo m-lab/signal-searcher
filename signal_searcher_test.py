@@ -30,13 +30,8 @@ class SignalSearcherTestCase(unittest.TestCase):
         self.assertEqual(parsed, date)
 
     def test_parse_date_throws_on_error(self):
-        saw_error = False
-        try:
-            parsed = signal_searcher.parse_date('12 Monkeys')
-            self.fail('this line should never execute: ' + str(parsed))
-        except ValueError:
-            saw_error = True
-        self.assertTrue(saw_error)
+        with self.assertRaises(ValueError):
+            _ = signal_searcher.parse_date('12 Monkeys')
 
     def test_argument_parsing(self):
         args = signal_searcher.parse_command_line([
