@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# No docstrings required for tests, and tests need to be methods of classes to
+# aid in organization of tests. Using the 'self' variable is not required.
+# Allow internal methods to be tested.
+#
+# pylint: disable=missing-docstring, no-self-use, too-many-public-methods, protected-access
 
 """Reads data from the MLab Cloud Bigtables."""
 
@@ -23,7 +28,7 @@ import mock
 
 import btreader
 
-def valueArray(data):
+def value_array(data):
     """Bigtable cells are lists where each element has a .value."""
     class ValueHaver(object):
         def __init__(self, d):
@@ -52,7 +57,7 @@ class FakeResponse(object):
     def consume_next(self):
         if self.asn_index >= len(self.asns):
             raise StopIteration('Done with fake bigtable data')
-        assert len(self.rows) == 0
+        assert not self.rows
         for _ in range(25):
             if self.current_date > self.max_date:
                 self.asn_index += 1
@@ -63,10 +68,10 @@ class FakeResponse(object):
                                     str(self.current_date))
             # pylint: disable=line-too-long
             self.rows[key] = FakeRow(
-                {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:upload_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:rtt_avg': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-                 'data:count': valueArray('50')})
+                {'data:download_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+                 'data:upload_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+                 'data:rtt_avg': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+                 'data:count': value_array('50')})
             # pylint: enable=line-too-long
             self.current_date += datetime.timedelta(days=1)
 
@@ -97,10 +102,10 @@ class BtReaderTest(unittest.TestCase):
         key, data = btreader._parse_key_and_data(
             'AS12 | nausny | 2017-08-09',
             # Contains raw byte versions of doubles, just like bigtable.
-            {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:upload_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:rtt_avg': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:count': valueArray('50')},
+            {'data:download_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:upload_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:rtt_avg': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:count': value_array('50')},
             'client_asn_client_loc_by_day')
         # pylint: enable=line-too-long
         self.assertEqual(key, 'AS12 | nausny ')
@@ -115,10 +120,10 @@ class BtReaderTest(unittest.TestCase):
         key, data = btreader._parse_key_and_data(
             'AS12',
             # Contains raw byte versions of doubles, just like bigtable.
-            {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:upload_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:rtt_avg': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:count': valueArray('50')},
+            {'data:download_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:upload_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:rtt_avg': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:count': value_array('50')},
             'client_asn_client_loc_by_day')
         # pylint: enable=line-too-long
         self.assertEqual(key, None)
@@ -129,8 +134,8 @@ class BtReaderTest(unittest.TestCase):
         key, data = btreader._parse_key_and_data(
             'AS12 | nausny | 2017-08-09',
             # Contains raw byte versions of doubles, just like bigtable.
-            {'data:download_speed_mbps_median': valueArray('?\xeb\xb1\xd3K\xb4{\x96'),
-             'data:count': valueArray('50')},
+            {'data:download_speed_mbps_median': value_array('?\xeb\xb1\xd3K\xb4{\x96'),
+             'data:count': value_array('50')},
             'client_asn_client_loc_by_day')
         # pylint: enable=line-too-long
         self.assertEqual(key, None)
