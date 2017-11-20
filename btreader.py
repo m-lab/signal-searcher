@@ -17,7 +17,6 @@
 """Reads data from the MLab Cloud Bigtables."""
 
 
-import collections
 import datetime
 import logging
 import struct
@@ -31,7 +30,11 @@ from google.cloud import bigtable
 
 
 def read_timeseries(table_name, _start=None, _end=None):
-    #Valid table names:
+    """Read a timeseries out of a bigtable table.
+
+    Yields: a sequence of key, timeseries pairs.
+    """
+    # Valid table names:
     assert table_name in ['client_asn_by_day',
                           'client_asn_client_loc_by_day',
                           'client_loc_by_day',
@@ -73,6 +76,7 @@ def read_timeseries(table_name, _start=None, _end=None):
 
 
 def _connect_to_table(name, start_key=None):  # pragma: no cover
+    """Connect to a cloud bigtable."""
     client = bigtable.Client(project='mlab-oti', admin=False)
     # TODO: verify that the permissions on this table are correct
     instance = client.instance('mlab-data-viz-prod')
@@ -81,6 +85,7 @@ def _connect_to_table(name, start_key=None):  # pragma: no cover
 
 
 def _parse_key(key):
+    """Parse a bigtable key into its datetime and non-datetime components."""
     if key.count('|') < 1:
         logging.warning('bad key "%s"', key)
         return None, None
@@ -98,6 +103,7 @@ def _parse_key(key):
 
 
 def _parse_key_and_data(key, data, table_name):
+    """Turns the binary data in a bigtable cell into InternetData."""
     key_no_date, date = _parse_key(key)
     if not key_no_date or not date:
         return None, None
@@ -115,6 +121,6 @@ def _parse_key_and_data(key, data, table_name):
     rtt = data['data:rtt_avg'][0].value
     rtt = struct.unpack('>d', rtt)[0]
     samples = int(data['data:count'][0].value)
-    return key_no_date, mlabdata.InternetData(key=key_no_date,
-            table=table_name, time=date, download=download, upload=upload,
-            rtt=rtt, samples=samples)
+    return (key_no_date, mlabdata.InternetData(
+        key=key_no_date, table=table_name, time=date, download=download,
+        upload=upload, rtt=rtt, samples=samples))
