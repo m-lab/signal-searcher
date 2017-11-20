@@ -46,3 +46,7 @@ class SignalSearcherTestCase(unittest.TestCase):
         ])
         self.assertEqual(args.start, datetime.datetime(year=2015, month=1, day=2))
         self.assertEqual(args.end, datetime.datetime(year=2015, month=1, day=3))
+
+
+if __name__ == '__main__':  # pragma: no cover
+    unittest.main()

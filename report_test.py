@@ -48,3 +48,7 @@ class ReportTests(unittest.TestCase):
 
     def test_cli_on_single_report(self):
         self.assertEqual(len(self.single_report.cli_report().splitlines()), 2)
+
+
+if __name__ == '__main__':  # pragma: no cover
+    unittest.main()

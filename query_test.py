@@ -383,5 +383,5 @@ class IpnetworkToIpRangeQueryTest(unittest.TestCase):
         self.assertEqual(actual[1], netaddr.IPAddress('10.0.255.255'))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     unittest.main()

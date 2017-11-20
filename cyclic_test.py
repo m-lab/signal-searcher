@@ -101,5 +101,5 @@ class TestCyclicProblemFinder(unittest.TestCase):
         self.assertEqual(len(cyclic.find_problems(cyclic_data)), 0)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     unittest.main()
