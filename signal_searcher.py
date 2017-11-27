@@ -27,6 +27,11 @@ import argparse
 import datetime
 import sys
 
+# Google cloud libraries are organized in a way that confuses the linter.
+# pylint: disable=no-name-in-module
+from google.cloud import bigquery
+# pylint: enable=no-name-in-module
+
 import cyclic
 import dateparser
 import btreader
@@ -99,6 +104,12 @@ def parse_command_line(cli_args):
         default='client_asn_client_loc_by_day',
         help='The bigtable name to look for the data'
         '(defaults to client_asn_client_loc_by_day)')
+    parser.add_argument(
+        '--bigquery',
+        metavar='TABLE_NAME',
+        default=None,
+        help='The name of the biqguery table in which to store problems.'
+        '(defaults None, indicating no saving is desired)')
     try:
         args = parser.parse_args(cli_args)
     except ValueError as error:
@@ -115,11 +126,16 @@ def main(argv):  # pragma: no-cover
     for key, timeseries in btreader.read_timeseries(args.bigtable, args.start,
                                                     args.end):
         # Look for problems
-        problems.extend(year_over_year.find_problems(key, timeseries))
+        problems_found = year_over_year.find_problems(key, timeseries)
+        if problems_found:
+            problems.extend(problems_found)
+            # Print each problem as it is discovered
+            for problem in problems_found:
+                print problem
 
-    # Print each problem
-    for problem in problems:
-        print problem
+    # Once all the problems have been discovered, store them in the requested manner.
+    if args.bigquery:
+        pass
 
 
 if __name__ == '__main__':  # pragma: no-cover
