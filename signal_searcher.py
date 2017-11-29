@@ -106,15 +106,19 @@ def parse_command_line(cli_args):
         '(defaults to client_asn_client_loc_by_day)')
     parser.add_argument(
         '--bigquery',
-        metavar='TABLE_NAME',
+        metavar='BQ_TABLE_NAME',
         default=None,
         help='The name of the biqguery table in which to store problems.'
-        '(defaults None, indicating no saving is desired)')
+        '(default is None, indicating no saving is desired)')
     try:
         args = parser.parse_args(cli_args)
     except ValueError as error:
         parser.error(error.message)
     return args
+
+
+def insertProblems(dataset_name, table_name, problem_list):
+    client = bigquery.Client()
 
 
 def main(argv):  # pragma: no-cover
@@ -134,8 +138,8 @@ def main(argv):  # pragma: no-cover
                 print problem
 
     # Once all the problems have been discovered, store them in the requested manner.
-    if args.bigquery:
-        pass
+    if args.bigquery and problems:
+        insertProblems('signalsearcher', args.bigquery, problems)
 
 
 if __name__ == '__main__':  # pragma: no-cover
