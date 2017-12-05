@@ -21,43 +21,52 @@ dropped by more than a threshold amount.
 import collections
 import logging
 
-import numpy 
-
 from mlabdata import Problem
 
 
+# A class to hold an incident that will be coalesced into a Problem.
 IntermediateProblem = collections.namedtuple(
     'IntermediateProblem', ['start', 'end', 'metric', 'severity'])
 
 
-ONEYEAR = 365
-TWOYEARS = 2 * ONEYEAR
-
 def _find_year_over_year_problems(single_metric_series, metric):
-    previous_year = sum(single_metric_series[:ONEYEAR])
-    current_year = sum(single_metric_series[ONEYEAR:TWOYEARS])
-    for i in range(TWOYEARS, len(single_metric_series)):
+    """Find instances of a metric dropping a sustained amount over a year.
+
+    Yields: a series of IntermediateProblem objects"""
+    # Constants used in year-long calculations
+    oneyear = 365
+    twoyears = 2 * oneyear
+
+    previous_year = sum(single_metric_series[:oneyear])
+    current_year = sum(single_metric_series[oneyear:twoyears])
+    for i in range(twoyears, len(single_metric_series)):
         if float(current_year) / float(previous_year) < .75:
             severity = float(current_year) / float(previous_year)
-            yield IntermediateProblem(i - TWOYEARS, i, metric, severity)
+            yield IntermediateProblem(i - twoyears, i, metric, severity)
         assert previous_year > 0
         assert current_year > 0
-        previous_year -= single_metric_series[i - TWOYEARS]
-        previous_year += single_metric_series[i - ONEYEAR]
-        current_year -= single_metric_series[i - ONEYEAR]
+        previous_year -= single_metric_series[i - twoyears]
+        previous_year += single_metric_series[i - oneyear]
+        current_year -= single_metric_series[i - oneyear]
         current_year += single_metric_series[i]
 
 
 def _analyze_stream(key, data, analysis_method):
+    """Takes a strem of tuples, and analyzes each tuple column.
+
+    After all the incidents are found, incidents which are adjacent in time are
+    combined.
+
+    Returns: a list of Problems discovered.
+    """
     if not data:
         logging.info('No data')
         return []
     problems_found = []
     for metric, _metric_name in [
-        ('download', 'Download speeds'),
-        #('upload', 'Upload speeds'),
-        #('rtt', 'Round-trip times'),
-    ]:
+            #('upload', 'Upload speeds'),
+            #('rtt', 'Round-trip times'),
+            ('download', 'Download speeds')]:
         field_index = data[0]._fields.index(metric)
         assert field_index >= 0, 'Bad metric name %s' % metric
         single_metric_series = [d[field_index] for d in data]
@@ -95,5 +104,5 @@ def _analyze_stream(key, data, analysis_method):
 
 
 def find_problems(key, data):
+    """Find all year-over-year performance degradations."""
     return _analyze_stream(key, data, _find_year_over_year_problems)
-    
