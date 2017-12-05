@@ -18,7 +18,6 @@
 import datetime
 import unittest
 
-import netaddr
 import signal_searcher
 
 
@@ -39,7 +38,8 @@ class SignalSearcherTestCase(unittest.TestCase):
             '--end',
             '2015-1-3',
         ])
-        self.assertEqual(args.start, datetime.datetime(year=2015, month=1, day=2))
+        self.assertEqual(args.start,
+                         datetime.datetime(year=2015, month=1, day=2))
         self.assertEqual(args.end, datetime.datetime(year=2015, month=1, day=3))
 
 

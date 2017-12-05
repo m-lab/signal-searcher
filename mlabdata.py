@@ -1,6 +1,7 @@
 """All of the datatypes that get passed around inside Signal Searcher."""
 
 import collections
+import datetime
 
 InternetData = collections.namedtuple(
     'InternetData',
@@ -49,6 +50,25 @@ class Problem(
     def __str__(self):
         return (super(Problem, self).__str__()[:-1] +
                 ', url=\'' + self.to_url() + '\')')
+
+    def dict(self):
+        """Returns a dictionary containing the tuple data."""
+        return {
+            'key': self.key,
+            'table': self.table,
+            'start_date': _date_to_timestamp(self.start_date),
+            'end_date': _date_to_timestamp(self.end_date),
+            'severity': self.severity,
+            'test_count': self.test_count,
+            'description': self.description,
+            'url': self.to_url()}
+
+
+def _date_to_timestamp(orig):
+    """Converts a datetime.date into a unix timestamp."""
+    return (datetime.datetime(orig.year, orig.month, orig.day, 0, 0, 0) -
+            datetime.datetime(1970, 1, 1, 0, 0, 0)
+           ).total_seconds()
 
 
 MlabDataEntry = collections.namedtuple(

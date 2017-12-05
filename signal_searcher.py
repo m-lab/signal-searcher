@@ -25,15 +25,16 @@ For more information, try:
 
 import argparse
 import datetime
+import logging
 import sys
+
+import dateparser
 
 # Google cloud libraries are organized in a way that confuses the linter.
 # pylint: disable=no-name-in-module
 from google.cloud import bigquery
 # pylint: enable=no-name-in-module
 
-import cyclic
-import dateparser
 import btreader
 import year_over_year
 
@@ -44,13 +45,13 @@ def parse_date(string):
     ArgumentParser is built expecting the custom argument parsers to throw
     exceptions when the parse fails, so we adapt dateparser to conform to that
     convention.
-  
+
     Args:
         s: a string to parse into a date
-  
+
     Returns:
         A datetime.datetime object
-  
+
     Raises:
         ValueError: on unparseable input
     """
@@ -67,10 +68,10 @@ def parse_command_line(cli_args):
     Prints help and exits if the user asks for that, and prints an error message
     and exits if the command-line arguments were bad in some way.  Otherwise,
     returns a tuple of the values of the parsed arguments.
-  
+
     Args:
         cli_args: Optional array of strings to parse. Uses sys.argv by default.
-  
+
     Returns:
         A dictionary of the parsed args
     """
@@ -117,11 +118,34 @@ def parse_command_line(cli_args):
     return args
 
 
-def insertProblems(dataset_name, table_name, problem_list):
-    client = bigquery.Client()
+def insert_problems(dataset_name, table_name, problem_list):
+    """Insert the discovered problems into a BigQuery table."""
+    # If there are no problems or nowhere to put the problems, do nothing.
+    if not dataset_name or not table_name or not problem_list:
+        return
+    client = bigquery.Client(project='mlab-sandbox')
+    dataset_ref = client.dataset(dataset_name)
+    table_ref = dataset_ref.table(table_name)
+    #schema = [
+    #    bigquery.SchemaField('key', 'STRING', mode='nullable'),
+    #    bigquery.SchemaField('table', 'STRING', mode='nullable'),
+    #    bigquery.SchemaField('start_date', 'STRING', mode='nullable'),
+    #    bigquery.SchemaField('end_date', 'STRING', mode='nullable'),
+    #    bigquery.SchemaField('severity', 'FLOAT', mode='nullable'),
+    #    bigquery.SchemaField('test_count', 'INTEGER', mode='nullable'),
+    #    bigquery.SchemaField('description', 'STRING', mode='nullable'),
+    #    bigquery.SchemaField('url', 'STRING', mode='nullable')
+    #]
+    #table = bigquery.Table(table_ref, schema=schema)
+    #table = client.create_table(table)
+    table = client.get_table(table_ref)
+    errors = client.create_rows(table, [x.dict() for x in problem_list])
+    if errors:
+        logging.error(errors)
 
 
 def main(argv):  # pragma: no-cover
+    """Read the data, look for badness, save the results."""
     # Parse the command-line
     args = parse_command_line(argv[1:])
 
@@ -135,11 +159,11 @@ def main(argv):  # pragma: no-cover
             problems.extend(problems_found)
             # Print each problem as it is discovered
             for problem in problems_found:
-                print problem
+                logging.info(problem)
 
-    # Once all the problems have been discovered, store them in the requested manner.
+    # Once all the problems have been discovered, store them.
     if args.bigquery and problems:
-        insertProblems('signalsearcher', args.bigquery, problems)
+        insert_problems('signalsearcher', args.bigquery, problems)
 
 
 if __name__ == '__main__':  # pragma: no-cover
