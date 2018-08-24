@@ -79,7 +79,7 @@ def _connect_to_table(name, start_key=None):  # pragma: no cover
     """Connect to a cloud bigtable."""
     client = bigtable.Client(project='mlab-oti', admin=False)
     # TODO: verify that the permissions on this table are correct
-    instance = client.instance('mlab-data-viz-prod')
+    instance = client.instance('mlab-data-viz-prod-2018')
     table = instance.table(name)
     return table.read_rows(start_key=start_key)
 
