@@ -18,7 +18,6 @@
 import datetime
 import unittest
 
-import netaddr
 import signal_searcher
 
 
@@ -30,25 +29,19 @@ class SignalSearcherTestCase(unittest.TestCase):
         self.assertEqual(parsed, date)
 
     def test_parse_date_throws_on_error(self):
-        saw_error = False
-        try:
-            parsed = signal_searcher.parse_date('12 Monkeys')
-            self.fail('this line should never execute: ' + str(parsed))
-        except ValueError:
-            saw_error = True
-        self.assertTrue(saw_error)
+        with self.assertRaises(ValueError):
+            _ = signal_searcher.parse_date('12 Monkeys')
 
     def test_argument_parsing(self):
-        start, end, blocks, _credentials = signal_searcher.parse_command_line([
+        args = signal_searcher.parse_command_line([
             '--start="January 2, 2015"',
             '--end',
             '2015-1-3',
-            '10.0.0.0/8',
-            '192.168.0.0/16',
         ])
+        self.assertEqual(args.start,
+                         datetime.datetime(year=2015, month=1, day=2))
+        self.assertEqual(args.end, datetime.datetime(year=2015, month=1, day=3))
 
-        self.assertEqual(start, datetime.datetime(year=2015, month=1, day=2))
-        self.assertEqual(end, datetime.datetime(year=2015, month=1, day=3))
-        self.assertIn(netaddr.IPNetwork('10.0.0.0/8'), blocks[0])
-        self.assertIn(netaddr.IPNetwork('192.168.0.0/16'), blocks[1])
-        self.assertEqual(len(blocks), 2)
+
+if __name__ == '__main__':  # pragma: no cover
+    unittest.main()
