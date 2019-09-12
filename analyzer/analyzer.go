@@ -43,7 +43,7 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 
 func FindPerformanceDrops(s *sequencer.Sequence) (incidents []Incident) {
 	dates, data := s.SortedSlices()
-	var previous, current sequencer.Data
+	var previous, current sequencer.Datum
 	for i := 0; i < 12; i++ {
 		previous.Download += data[i].Download
 		previous.Count += data[i].Count

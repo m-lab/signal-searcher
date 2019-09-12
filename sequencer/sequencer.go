@@ -13,27 +13,27 @@ type Meta struct {
 	ASN, Loc string
 }
 
-type Data struct {
+type Datum struct {
 	Count    int
 	Download float64
 }
 
 type Sequence struct {
 	Key Meta
-	Seq map[string]Data
+	Seq map[string]Datum
 }
 
-func (s *Sequence) SortedSlices() ([]string, []Data) {
-	var keys []string
-	var values []Data
-	for k := range s.Seq {
-		keys = append(keys, k)
+func (s *Sequence) SortedSlices() ([]string, []Datum) {
+	var dates []string
+	var data []Datum
+	for d := range s.Seq {
+		dates = append(dates, d)
 	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		values = append(values, s.Seq[k])
+	sort.Strings(dates)
+	for _, d := range dates {
+		data = append(data, s.Seq[d])
 	}
-	return keys, values
+	return dates, data
 }
 
 type Sequencer struct {
@@ -60,14 +60,14 @@ func getMeta(ris []bigtable.ReadItem) (meta Meta, date string) {
 	return
 }
 
-func getData(ris []bigtable.ReadItem) (data Data) {
+func getData(ris []bigtable.ReadItem) (datum Datum) {
 	for _, ri := range ris {
 		switch ri.Column {
 		case "data:download_speed_mbps_median":
 			bits := binary.BigEndian.Uint64(ri.Value)
-			data.Download = math.Float64frombits(bits)
+			datum.Download = math.Float64frombits(bits)
 		case "data:count":
-			data.Count, _ = strconv.Atoi(string(ri.Value)) // Ignore parsing error
+			datum.Count, _ = strconv.Atoi(string(ri.Value)) // Ignore parsing error
 		}
 	}
 	return
@@ -82,7 +82,7 @@ func (s *Sequencer) ProcessRow(r bigtable.Row) bool {
 	if s.currentSequence == nil {
 		s.currentSequence = &Sequence{
 			Key: key,
-			Seq: make(map[string]Data),
+			Seq: make(map[string]Datum),
 		}
 	}
 	s.currentSequence.Seq[date] = getData(r["data"])
