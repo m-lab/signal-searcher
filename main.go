@@ -24,13 +24,17 @@ func main() {
 		rtx.Must(err, "Could not read table")
 		s.Done()
 	}()
+
+	fmt.Println("TestsAffected, AS, LocationCode, StartDate, EndDate, URL")
 	for seq := range c {
 		if len(seq.Seq) <= 24 {
 			continue
 		}
 
 		for _, incident := range analyzer.FindPerformanceDrops(seq) {
-			fmt.Println(incident.AffectedCount, seq.Key.ASN, seq.Key.Loc, incident.StartDate, incident.EndDate, incident.URL(seq.Key))
+			fmt.Printf(
+				"%d, %s, %s, %s, %s, %s\n",
+				incident.AffectedCount, seq.Key.ASN, seq.Key.Loc, incident.StartDate, incident.EndDate, incident.URL(seq.Key))
 		}
 	}
 }
