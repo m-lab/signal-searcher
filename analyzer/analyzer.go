@@ -46,19 +46,15 @@ func FindPerformanceDrops(s *sequencer.Sequence) []Incident {
 	var previous, current sequencer.Datum
 	for i := 0; i < 12; i++ {
 		previous.Download += data[i].Download
-		previous.Count += data[i].Count
 	}
 	for i := 12; i < 24; i++ {
 		current.Download += data[i].Download
-		current.Count += data[i].Count
 	}
 	var arrayIncidents []arrayIncident
 	for i := 24; i < len(data); i++ {
 		// Update the running sums
 		previous.Download = previous.Download - data[i-24].Download + data[i-12].Download
-		previous.Count = previous.Count - data[i-24].Count + data[i-12].Count
 		current.Download = current.Download - data[i-12].Download + data[i].Download
-		current.Count = current.Count - data[i-12].Count + data[i].Count
 
 		if previous.Download*.7 > current.Download {
 			arrayIncidents = append(arrayIncidents, arrayIncident{start: i - 12, end: i})
