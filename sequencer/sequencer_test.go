@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-test/deep"
+
 	"cloud.google.com/go/bigtable"
 )
 
@@ -78,5 +80,8 @@ func TestSequence_SortedSlices(t *testing.T) {
 	}
 	if strings.Join(dates, " ") != "2009-01 2009-02" {
 		t.Error("Bad dates")
+	}
+	if diffs := deep.Equal(data, []Datum{{Count: 1, Download: 2}, {Count: 3, Download: 4}}); diffs != nil {
+		t.Error("Bad data:", diffs)
 	}
 }

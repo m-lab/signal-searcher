@@ -1,8 +1,12 @@
-dist: trusty
-sudo: false
 language: go
+
 before_script:
 - go get github.com/mattn/goveralls
 
 script:
-- $GOPATH/bin/goveralls -service=travis-ci
+# Build everything and retrieve any component libraries.
+- go get ./...
+# Run every regular unit test.
+- go test -covermode=count -coverprofile=_coverage.cov -v ./...
+# Submit coverage to Coveralls.io
+- $GOPATH/bin/goveralls -coverprofile=_coverage.cov -service=travis-ci
