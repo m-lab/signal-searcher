@@ -114,10 +114,10 @@ func TestIncident_URL(t *testing.T) {
 	}
 	values := pu.Query()
 	if diff := deep.Equal(values, url.Values{
-		"aggr": {"month"},
-		"isps": {"AS1"},
+		"aggr":  {"month"},
+		"isps":  {"AS1"},
 		"start": {"2012-05-01"},
-		"end": {"2014-04-01"},
+		"end":   {"2014-04-01"},
 	}); diff != nil {
 		t.Error("Bad query string:", diff)
 	}
