@@ -16,7 +16,7 @@ func (i *Incident) URL(m sequencer.Meta) string {
 	startDate, _ := time.Parse("2006-01", i.StartDate)
 	twelveBeforeStart := startDate.Add(-365 * 24 * time.Hour)
 	return fmt.Sprintf(
-		"http://viz.measurementlab.net/location/%s?aggr=month&isps=%s&start=%s-01&end=%s-01",
+		"http://viz.measurementlab.net/location/%s?aggr=month&isps=%s&start=%s&end=%s-01",
 		m.Loc, m.ASN, twelveBeforeStart.Format("2006-01-02"), i.EndDate)
 }
 
@@ -41,7 +41,7 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 	return
 }
 
-func FindPerformanceDrops(s *sequencer.Sequence) (incidents []Incident) {
+func FindPerformanceDrops(s *sequencer.Sequence) []Incident {
 	dates, data := s.SortedSlices()
 	var previous, current sequencer.Datum
 	for i := 0; i < 12; i++ {
@@ -65,6 +65,7 @@ func FindPerformanceDrops(s *sequencer.Sequence) (incidents []Incident) {
 		}
 	}
 	arrayIncidents = mergeArrayIncidents(arrayIncidents)
+	incidents := []Incident{}
 	for _, ai := range arrayIncidents {
 		newIncident := Incident{StartDate: dates[ai.start], EndDate: dates[ai.end]}
 		for i := ai.start; i < ai.end; i++ {
@@ -72,5 +73,5 @@ func FindPerformanceDrops(s *sequencer.Sequence) (incidents []Incident) {
 		}
 		incidents = append(incidents, newIncident)
 	}
-	return
+	return incidents
 }
