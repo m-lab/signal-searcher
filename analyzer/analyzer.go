@@ -7,11 +7,14 @@ import (
 	"github.com/m-lab/signal-searcher/sequencer"
 )
 
+// An Incident represents a piece of a timeseries that contains a user-visible
+// problem.
 type Incident struct {
 	StartDate, EndDate string
 	AffectedCount      int
 }
 
+// URL converts an incident (along with provided Metadata) into a viz URL.
 func (i *Incident) URL(m sequencer.Meta) string {
 	startDate, _ := time.Parse("2006-01", i.StartDate)
 	twelveBeforeStart := startDate.Add(-365 * 24 * time.Hour)
@@ -41,6 +44,8 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 	return
 }
 
+// FindPerformanceDrops discovers time periods of a year or greater where
+// performance showed more than a 30% average drop.
 func FindPerformanceDrops(s *sequencer.Sequence) []Incident {
 	dates, data := s.SortedSlices()
 	var previous, current sequencer.Datum
