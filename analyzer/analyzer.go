@@ -18,7 +18,7 @@ type Incident struct {
 func (i *Incident) URL(m sequencer.Meta) string {
 	twelveBeforeStart := i.Start.AddDate(-1, 0, 0)
 	return fmt.Sprintf(
-		"http://viz.measurementlab.net/location/%s?aggr=month&isps=%s&start=%s&end=%s",
+		"https://viz.measurementlab.net/location/%s?aggr=month&isps=%s&start=%s&end=%s",
 		m.Loc, m.ASN, twelveBeforeStart.Format("2006-01-02"), i.End.Format("2006-01-02"))
 }
 
