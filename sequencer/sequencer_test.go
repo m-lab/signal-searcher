@@ -84,8 +84,8 @@ func TestSequence_SortedSlices(t *testing.T) {
 	if len(dates) != len(data) {
 		t.Error(dates, "and", data, "should be of the same length")
 	}
-	if dates[0] != time.Date(2009, 1, 1, 0, 0, 0, 0, time.UTC) && dates[1] != time.Date(2009, 1, 1, 0, 0, 0, 0, time.UTC) {
-		t.Error("Bad dates")
+	if dates[0] != time.Date(2009, 1, 1, 0, 0, 0, 0, time.UTC) || dates[1] != time.Date(2009, 2, 1, 0, 0, 0, 0, time.UTC) {
+		t.Error("Bad dates", dates[0], dates[1])
 	}
 	if diffs := deep.Equal(data, []Datum{{Count: 1, Download: 2}, {Count: 3, Download: 4}}); diffs != nil {
 		t.Error("Bad data:", diffs)
