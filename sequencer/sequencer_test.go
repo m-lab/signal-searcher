@@ -56,9 +56,15 @@ func Test_ProcessRow(t *testing.T) {
 	if len(s1.Seq) != 2 {
 		t.Error("Returned sequence is not of length 2:", s1)
 	}
+	if s1.Key.ASN != "AS1" {
+		t.Error("First sequence should be for AS1, not", s1.Key.ASN)
+	}
 	s2 := <-c
 	if len(s2.Seq) != 1 {
 		t.Error("Second sequence should be of length 1")
+	}
+	if s2.Key.ASN != "AS2" {
+		t.Error("First sequence should be for AS2, not", s2.Key.ASN)
 	}
 	_, ok := <-c
 	if ok {
