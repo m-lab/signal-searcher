@@ -1,8 +1,0 @@
-dateparser
-google-api-python-client
-google-cloud-bigtable
-google-cloud-bigquery
-google-cloud-core
-httplib2
-netaddr
-numpy
