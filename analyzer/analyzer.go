@@ -10,17 +10,16 @@ import (
 // An Incident represents a piece of a timeseries that contains a user-visible
 // problem.
 type Incident struct {
-	StartDate, EndDate string
-	AffectedCount      int
+	Start, End    time.Time
+	AffectedCount int
 }
 
 // URL converts an incident (along with provided Metadata) into a viz URL.
 func (i *Incident) URL(m sequencer.Meta) string {
-	startDate, _ := time.Parse("2006-01", i.StartDate)
-	twelveBeforeStart := startDate.Add(-365 * 24 * time.Hour)
+	twelveBeforeStart := i.Start.AddDate(-1, 0, 0)
 	return fmt.Sprintf(
-		"http://viz.measurementlab.net/location/%s?aggr=month&isps=%s&start=%s&end=%s-01",
-		m.Loc, m.ASN, twelveBeforeStart.Format("2006-01-02"), i.EndDate)
+		"http://viz.measurementlab.net/location/%s?aggr=month&isps=%s&start=%s&end=%s",
+		m.Loc, m.ASN, twelveBeforeStart.Format("2006-01-02"), i.End.Format("2006-01-02"))
 }
 
 type arrayIncident struct {
@@ -68,7 +67,7 @@ func FindPerformanceDrops(s *sequencer.Sequence) []Incident {
 	arrayIncidents = mergeArrayIncidents(arrayIncidents)
 	incidents := []Incident{}
 	for _, ai := range arrayIncidents {
-		newIncident := Incident{StartDate: dates[ai.start], EndDate: dates[ai.end]}
+		newIncident := Incident{Start: dates[ai.start], End: dates[ai.end]}
 		for i := ai.start; i < ai.end; i++ {
 			newIncident.AffectedCount += data[i].Count
 		}

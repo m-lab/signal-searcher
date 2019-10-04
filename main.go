@@ -21,7 +21,7 @@ var (
 // This takes monthly download data and discovers instances of year-long
 // sustained drops in Internet performance. It is currently hardcoded to only
 // work with monthly data. It likely has lots of other issues too. Nevertheless,
-// it finds 17000 results, which is a good start.
+// it finds 17,000 results, which is a good start.
 
 func main() {
 	defer mainCancel()
@@ -37,7 +37,7 @@ func main() {
 		s.Done()
 	}()
 
-	fmt.Println("TestsAffected, AS, LocationCode, StartDate, EndDate, URL")
+	fmt.Println("TestsAffected, AS, LocationCode, Start, End, URL")
 	for seq := range c {
 		if len(seq.Seq) <= 24 {
 			continue
@@ -46,7 +46,7 @@ func main() {
 		for _, incident := range analyzer.FindPerformanceDrops(seq) {
 			fmt.Printf(
 				"%d, %s, %s, %s, %s, %s\n",
-				incident.AffectedCount, seq.Key.ASN, seq.Key.Loc, incident.StartDate, incident.EndDate, incident.URL(seq.Key))
+				incident.AffectedCount, seq.Key.ASN, seq.Key.Loc, incident.Start.Format("2006-01-02"), incident.End.Format("2006-01-02"), incident.URL(seq.Key))
 		}
 	}
 }

@@ -5,8 +5,10 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"time"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/m-lab/go/rtx"
 )
 
 // Meta is the metadata associated with a data sequence. It corresponds to a
@@ -25,17 +27,17 @@ type Datum struct {
 // Sequence holds a metadata key and a mapping from date strings to data.
 type Sequence struct {
 	Key Meta
-	Seq map[string]Datum
+	Seq map[time.Time]Datum
 }
 
 // SortedSlices converts a sequence into parallel arrays of dates and data.
-func (s *Sequence) SortedSlices() ([]string, []Datum) {
-	var dates []string
+func (s *Sequence) SortedSlices() ([]time.Time, []Datum) {
+	var dates []time.Time
 	var data []Datum
 	for d := range s.Seq {
 		dates = append(dates, d)
 	}
-	sort.Strings(dates)
+	sort.Slice(dates, func(i, j int) bool { return dates[i].Before(dates[j]) })
 	for _, d := range dates {
 		data = append(data, s.Seq[d])
 	}
@@ -56,7 +58,7 @@ func New() (*Sequencer, <-chan *Sequence) {
 	return &Sequencer{output: c}, c
 }
 
-func getMeta(ris []bigtable.ReadItem) (meta Meta, date string) {
+func getMeta(ris []bigtable.ReadItem) (meta Meta, date time.Time) {
 	for _, ri := range ris {
 		switch ri.Column {
 		case "meta:client_asn_number":
@@ -64,7 +66,9 @@ func getMeta(ris []bigtable.ReadItem) (meta Meta, date string) {
 		case "meta:client_location_key":
 			meta.Loc = string(ri.Value)
 		case "meta:date":
-			date = string(ri.Value)
+			var err error
+			date, err = time.Parse("2006-01", string(ri.Value))
+			rtx.Must(err, "Could not parse %q", string(ri.Value))
 		}
 	}
 	return
@@ -94,7 +98,7 @@ func (s *Sequencer) ProcessRow(r bigtable.Row) bool {
 	if s.currentSequence == nil {
 		s.currentSequence = &Sequence{
 			Key: key,
-			Seq: make(map[string]Datum),
+			Seq: make(map[time.Time]Datum),
 		}
 	}
 	s.currentSequence.Seq[date] = getData(r["data"])

@@ -1,11 +1,11 @@
 package analyzer
 
 import (
-	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 	"github.com/m-lab/go/rtx"
@@ -46,11 +46,11 @@ func Test_mergeArrayIncidents(t *testing.T) {
 }
 
 func TestFindPerformanceDrops(t *testing.T) {
-	flatSequence := map[string]sequencer.Datum{}
-	oneBadYear := map[string]sequencer.Datum{}
+	flatSequence := map[time.Time]sequencer.Datum{}
+	oneBadYear := map[time.Time]sequencer.Datum{}
 	for year := 2009; year <= 2020; year++ {
 		for month := 1; month <= 12; month++ {
-			d := fmt.Sprintf("%d-%02d", year, month)
+			d := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 			flatSequence[d] = sequencer.Datum{
 				Download: 100,
 				Count:    1,
@@ -82,7 +82,11 @@ func TestFindPerformanceDrops(t *testing.T) {
 		{
 			name:  "One bad year",
 			input: &sequencer.Sequence{Seq: oneBadYear},
-			want:  []Incident{{StartDate: "2011-12", EndDate: "2012-12", AffectedCount: 12}},
+			want: []Incident{{
+				Start:         time.Date(2011, 12, 1, 0, 0, 0, 0, time.UTC),
+				End:           time.Date(2012, 12, 1, 0, 0, 0, 0, time.UTC),
+				AffectedCount: 12,
+			}},
 		},
 	}
 	for _, tt := range tests {
@@ -98,8 +102,8 @@ func TestFindPerformanceDrops(t *testing.T) {
 
 func TestIncident_URL(t *testing.T) {
 	inc := Incident{
-		StartDate:     "2013-05",
-		EndDate:       "2014-04",
+		Start:         time.Date(2013, 5, 1, 0, 0, 0, 0, time.UTC),
+		End:           time.Date(2014, 4, 1, 0, 0, 0, 0, time.UTC),
 		AffectedCount: 1200,
 	}
 	meta := sequencer.Meta{

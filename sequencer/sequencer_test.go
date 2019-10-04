@@ -1,8 +1,8 @@
 package sequencer
 
 import (
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 
@@ -69,16 +69,16 @@ func Test_ProcessRow(t *testing.T) {
 func TestSequence_SortedSlices(t *testing.T) {
 	s := &Sequence{
 		Key: Meta{ASN: "AS1", Loc: "naus"},
-		Seq: map[string]Datum{
-			"2009-02": {Count: 3, Download: 4},
-			"2009-01": {Count: 1, Download: 2},
+		Seq: map[time.Time]Datum{
+			time.Date(2009, 2, 1, 0, 0, 0, 0, time.UTC): {Count: 3, Download: 4},
+			time.Date(2009, 1, 1, 0, 0, 0, 0, time.UTC): {Count: 1, Download: 2},
 		},
 	}
 	dates, data := s.SortedSlices()
 	if len(dates) != len(data) {
 		t.Error(dates, "and", data, "should be of the same length")
 	}
-	if strings.Join(dates, " ") != "2009-01 2009-02" {
+	if dates[0] != time.Date(2009, 1, 1, 0, 0, 0, 0, time.UTC) && dates[1] != time.Date(2009, 1, 1, 0, 0, 0, 0, time.UTC) {
 		t.Error("Bad dates")
 	}
 	if diffs := deep.Equal(data, []Datum{{Count: 1, Download: 2}, {Count: 3, Download: 4}}); diffs != nil {
