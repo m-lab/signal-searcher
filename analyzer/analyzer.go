@@ -3,7 +3,7 @@ package analyzer
 import (
 	"fmt"
 	"time"
-
+	
 	"github.com/m-lab/signal-searcher/sequencer"
 )
 
@@ -12,6 +12,7 @@ import (
 type Incident struct {
 	Start, End    time.Time
 	AffectedCount int
+	Severity      float64
 }
 
 // URL converts an incident (along with provided Metadata) into a viz URL.
@@ -24,6 +25,7 @@ func (i *Incident) URL(m sequencer.Meta) string {
 
 type arrayIncident struct {
 	start, end int
+	severity   float64
 }
 
 func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
@@ -59,15 +61,14 @@ func FindPerformanceDrops(s *sequencer.Sequence) []Incident {
 		// Update the running sums
 		previous.Download = previous.Download - data[i-24].Download + data[i-12].Download
 		current.Download = current.Download - data[i-12].Download + data[i].Download
-
 		if previous.Download*.7 > current.Download {
-			arrayIncidents = append(arrayIncidents, arrayIncident{start: i - 12, end: i})
+			arrayIncidents = append(arrayIncidents, arrayIncident{start: i - 12, end: i, severity: 1.0 - current.Download/previous.Download})
 		}
 	}
 	arrayIncidents = mergeArrayIncidents(arrayIncidents)
 	incidents := []Incident{}
 	for _, ai := range arrayIncidents {
-		newIncident := Incident{Start: dates[ai.start], End: dates[ai.end]}
+		newIncident := Incident{Start: dates[ai.start], End: dates[ai.end], Severity: ai.severity}
 		for i := ai.start; i < ai.end; i++ {
 			newIncident.AffectedCount += data[i].Count
 		}

@@ -37,7 +37,7 @@ func main() {
 		s.Done()
 	}()
 
-	fmt.Println("TestsAffected, AS, LocationCode, Start, End, URL")
+	fmt.Println("TestsAffected, AS, LocationCode, Start, End, Severity,URL")
 	for seq := range c {
 		if len(seq.Seq) <= 24 {
 			continue
@@ -45,8 +45,8 @@ func main() {
 
 		for _, incident := range analyzer.FindPerformanceDrops(seq) {
 			fmt.Printf(
-				"%d, %s, %s, %s, %s, %s\n",
-				incident.AffectedCount, seq.Key.ASN, seq.Key.Loc, incident.Start.Format("2006-01-02"), incident.End.Format("2006-01-02"), incident.URL(seq.Key))
+				"%d, %s, %s, %s, %s, %f, %s\n",
+				incident.AffectedCount, seq.Key.ASN, seq.Key.Loc, incident.Start.Format("2006-01-02"), incident.End.Format("2006-01-02"), incident.Severity, incident.URL(seq.Key))
 		}
 	}
 }
