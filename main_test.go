@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"encoding/binary"
+	"encoding/csv"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"cloud.google.com/go/bigtable"
@@ -71,6 +74,10 @@ func populateFakeDataBT(conn *grpc.ClientConn) {
 }
 
 func TestMain(t *testing.T) {
+	// Set flags to values that are definitely NOT production values.
+	*project = "mlab-fake-project"
+	*instance = "fake-bigtable-instance"
+
 	srv, err := bttest.NewServer("localhost:0")
 	rtx.Must(err, "Could not start local BT server")
 	defer srv.Close()
@@ -83,5 +90,24 @@ func TestMain(t *testing.T) {
 	}
 	populateFakeDataBT(conn)
 
+	oldStdout := os.Stdout
+	defer func() {
+		os.Stdout = oldStdout
+	}()
+	tmp, err := ioutil.TempFile("", "TestSignalSearcherMain")
+	rtx.Must(err, "Could not create temp file")
+	os.Stdout = tmp
+	defer os.Remove(tmp.Name())
+
 	main()
+
+	os.Stdout = oldStdout
+	tmp.Close()
+	tmp, err = os.Open(tmp.Name())
+	rtx.Must(err, "Could not read temp file")
+	contents, err := csv.NewReader(tmp).ReadAll()
+	rtx.Must(err, "Could not serialize a CSV from the output")
+	if len(contents) != 2 {
+		t.Errorf("The output csv file should only have had two lines, not %v", contents)
+	}
 }
