@@ -27,13 +27,13 @@ func Test_mergeArrayIncidents(t *testing.T) {
 		},
 		{
 			name:  "One is okay",
-			input: []arrayIncident{{1, 2}},
-			want:  []arrayIncident{{1, 2}},
+			input: []arrayIncident{{1, 2, 0.3}},
+			want:  []arrayIncident{{1, 2, 0.3}},
 		},
 		{
 			name:  "Merged unmerged merged",
-			input: []arrayIncident{{1, 3}, {2, 4}, {4, 9}, {11, 15}, {12, 16}, {13, 17}},
-			want:  []arrayIncident{{1, 4}, {4, 9}, {11, 17}},
+			input: []arrayIncident{{1, 3, 0.3}, {2, 4, 0.4}, {4, 9, 0.4}, {11, 15, 0.4}, {12, 16, 0.4}, {13, 17, 0.4}},
+			want:  []arrayIncident{{1, 4, 0.3}, {4, 9, 0.4}, {11, 17, 0.4}},
 		},
 	}
 	for _, tt := range tests {
@@ -48,21 +48,23 @@ func Test_mergeArrayIncidents(t *testing.T) {
 func TestFindPerformanceDrops(t *testing.T) {
 	flatSequence := map[time.Time]sequencer.Datum{}
 	oneBadYear := map[time.Time]sequencer.Datum{}
+	badYearDownload := 68.0
+	goodDownload := 100.0
 	for year := 2009; year <= 2020; year++ {
 		for month := 1; month <= 12; month++ {
 			d := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 			flatSequence[d] = sequencer.Datum{
-				Download: 100,
+				Download: goodDownload,
 				Count:    1,
 			}
 			if year == 2012 {
 				oneBadYear[d] = sequencer.Datum{
-					Download: 68,
+					Download: badYearDownload,
 					Count:    1,
 				}
 			} else {
 				oneBadYear[d] = sequencer.Datum{
-					Download: 100,
+					Download: goodDownload,
 					Count:    1,
 				}
 			}
@@ -85,6 +87,7 @@ func TestFindPerformanceDrops(t *testing.T) {
 			want: []Incident{{
 				Start:         time.Date(2011, 12, 1, 0, 0, 0, 0, time.UTC),
 				End:           time.Date(2012, 12, 1, 0, 0, 0, 0, time.UTC),
+				Severity:      1.0 - (badYearDownload / goodDownload),
 				AffectedCount: 12,
 			}},
 		},
