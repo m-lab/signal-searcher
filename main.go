@@ -16,6 +16,9 @@ var (
 	instance = flag.String("instance", "viz-pipeline", "The name of the cloud bigtable instance to use")
 
 	mainCtx, mainCancel = context.WithCancel(context.Background())
+
+	// A variable to allow injection of a fake bigtable client for testing.
+	bigtableNewClient = bigtable.NewClient
 )
 
 // This takes monthly download data and discovers instances of year-long
@@ -27,7 +30,7 @@ func main() {
 	defer mainCancel()
 	flag.Parse()
 
-	client, err := bigtable.NewClient(mainCtx, *project, *instance)
+	client, err := bigtableNewClient(mainCtx, *project, *instance)
 	rtx.Must(err, "Could not connect to bigtable")
 	table := client.Open("client_asn_client_loc_by_month")
 	s, c := sequencer.New()
