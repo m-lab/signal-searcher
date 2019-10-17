@@ -32,8 +32,8 @@ func Test_mergeArrayIncidents(t *testing.T) {
 		},
 		{
 			name:  "Merged unmerged merged",
-			input: []arrayIncident{{1, 3, 0.3}, {2, 4, 0.4}, {4, 9, 0.4}, {11, 15, 0.4}, {12, 16, 0.4}, {13, 17, 0.4}},
-			want:  []arrayIncident{{1, 4, 0.3}, {4, 9, 0.4}, {11, 17, 0.4}},
+			input: []arrayIncident{{1, 3, 0.3}, {2, 4, 0.4}, {4, 9, 0.4}, {11, 15, 0.2}, {12, 16, 0.6}, {13, 17, 0.6}},
+			want:  []arrayIncident{{1, 4, 0.4}, {4, 9, 0.4}, {11, 17, 0.6}},
 		},
 	}
 	for _, tt := range tests {

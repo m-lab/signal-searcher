@@ -2,8 +2,9 @@ package analyzer
 
 import (
 	"fmt"
+	"math"
 	"time"
-	
+
 	"github.com/m-lab/signal-searcher/sequencer"
 )
 
@@ -28,6 +29,7 @@ type arrayIncident struct {
 	severity   float64
 }
 
+// severity of merged incident should be the max of the incidents merged
 func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 	if len(a) <= 1 {
 		return a
@@ -36,6 +38,7 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 	for i := 1; i < len(a); i++ {
 		if current.end+1 == a[i].end {
 			current.end = a[i].end
+			current.severity = math.Max(a[i].severity, current.severity)
 		} else {
 			merged = append(merged, current)
 			current = a[i]
