@@ -2,7 +2,6 @@ package analyzer
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/m-lab/signal-searcher/sequencer"
@@ -42,7 +41,11 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 	for i := 1; i < len(a); i++ {
 		if current.end+1 == a[i].end {
 			current.end = a[i].end
-			current.severity = math.Max(a[i].severity, current.severity)
+			if a[i].severity > current.severity {
+				current.goodPeriodDownload = a[i].goodPeriodDownload
+				current.badPeriodDownload = a[i].badPeriodDownload
+				current.severity = a[i].severity
+			}
 		} else {
 			merged = append(merged, current)
 			current = a[i]
