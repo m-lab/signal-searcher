@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/m-lab/signal-searcher/sequencer"
@@ -34,6 +35,8 @@ type arrayIncident struct {
 
 // severity of merged incident should be the max of the incidents merged
 func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
+	// add parameter for when incident starts (i from findPerformanceDrops)
+	// add param for sequencer (the data which is s.sortedSlices)
 	if len(a) <= 1 {
 		return a
 	}
@@ -41,11 +44,14 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 	for i := 1; i < len(a); i++ {
 		if current.end+1 == a[i].end {
 			current.end = a[i].end
-			if a[i].severity > current.severity {
+			current.severity = math.Max(a[i].severity, current.severity)
+			// bad period download speed is the average of the two incidents' bad period download speeds
+			current.badPeriodDownload = (a[i].badPeriodDownload + current.badPeriodDownload) / 2
+			//good period download speed is that of the incident that started earlier
+			if a[i].start < current.start {
 				current.goodPeriodDownload = a[i].goodPeriodDownload
-				current.badPeriodDownload = a[i].badPeriodDownload
-				current.severity = a[i].severity
 			}
+
 		} else {
 			merged = append(merged, current)
 			current = a[i]
