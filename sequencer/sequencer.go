@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/bigtable"
 	"github.com/m-lab/go/rtx"
 )
@@ -103,6 +104,32 @@ func (s *Sequencer) ProcessRow(r bigtable.Row) bool {
 	}
 	s.currentSequence.Seq[date] = getData(r["data"])
 	return true
+}
+
+// ProcessBQMap processes a single bigquery row, either adding it to the current
+// sequence or creating a new sequence.
+func (s *Sequencer) ProcessBQMap(row map[string]bigquery.Value) {
+	meta := Meta{
+		Loc: row["country"].(string),
+		ASN: row["asn"].(string),
+	}
+	date := time.Date(int(row["year"].(int64)), time.Month(int(row["month"].(int64))), 1, 0, 0, 0, 0, time.UTC)
+	datum := Datum{
+		Download: row["median_bandwidth"].(float64),
+		Count:    int(row["count"].(int64)),
+	}
+
+	if s.currentSequence != nil && s.currentSequence.Key != meta {
+		s.output <- s.currentSequence
+		s.currentSequence = nil
+	}
+	if s.currentSequence == nil {
+		s.currentSequence = &Sequence{
+			Key: meta,
+			Seq: make(map[time.Time]Datum),
+		}
+	}
+	s.currentSequence.Seq[date] = datum
 }
 
 // Done is called after ReadRows is completed. It outputs the last sequence (if

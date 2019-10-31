@@ -25,7 +25,7 @@ func newClientFactory(conn *grpc.ClientConn) func(context.Context, string, strin
 func populateFakeDataBT(conn *grpc.ClientConn) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	adminClient, err := bigtable.NewAdminClient(ctx, *project, *instance, option.WithGRPCConn(conn))
+	adminClient, err := bigtable.NewAdminClient(ctx, *project, "fake instance", option.WithGRPCConn(conn))
 	rtx.Must(err, "Could not create admin client")
 	rtx.Must(adminClient.CreateTable(ctx, "client_asn_client_loc_by_month"), "Could not create table")
 	for _, col := range []string{"meta", "data"} {
