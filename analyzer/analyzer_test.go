@@ -85,10 +85,12 @@ func TestFindPerformanceDrops(t *testing.T) {
 			name:  "One bad year",
 			input: &sequencer.Sequence{Seq: oneBadYear},
 			want: []Incident{{
-				Start:         time.Date(2011, 12, 1, 0, 0, 0, 0, time.UTC),
-				End:           time.Date(2012, 12, 1, 0, 0, 0, 0, time.UTC),
-				Severity:      1.0 - (badYearDownload / goodDownload),
-				AffectedCount: 12,
+				Start:              time.Date(2011, 12, 1, 0, 0, 0, 0, time.UTC),
+				End:                time.Date(2012, 12, 1, 0, 0, 0, 0, time.UTC),
+				Severity:           1.0 - (badYearDownload / goodDownload),
+				AffectedCount:      12,
+				GoodPeriodDownload: goodDownload,
+				BadPeriodDownload:  badYearDownload,
 			}},
 		},
 	}
