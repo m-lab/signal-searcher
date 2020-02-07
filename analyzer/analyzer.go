@@ -41,16 +41,13 @@ func mergeArrayIncidents(a []arrayIncident) (merged []arrayIncident) {
 		return a
 	}
 	current := a[0]
+	// current is going to be earlier than a[i]
 	for i := 1; i < len(a); i++ {
 		if current.end+1 == a[i].end {
 			current.end = a[i].end
 			current.severity = math.Max(a[i].severity, current.severity)
 			// bad period download speed is the average of the two incidents' bad period download speeds
 			current.badPeriodDownload = (a[i].badPeriodDownload + current.badPeriodDownload) / 2
-			//good period download speed is that of the incident that started earlier
-			if a[i].start < current.start {
-				current.goodPeriodDownload = a[i].goodPeriodDownload
-			}
 
 		} else {
 			merged = append(merged, current)
