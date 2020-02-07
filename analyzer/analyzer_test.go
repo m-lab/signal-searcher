@@ -41,11 +41,6 @@ func Test_mergeArrayIncidents(t *testing.T) {
 			input: []arrayIncident{{1, 3, 0.8, 0.7, 0.14}, {2, 4, 0.5, 0.2, 0.10}, {4, 9, 0.4, 0.1, 0.06}, {11, 15, 0.8, 0.1, 0.08}, {12, 16, 0.6, 0.08, 0.032}, {13, 17, 0.6, 0.08, 0.032}},
 			want:  []arrayIncident{{1, 4, 0.8, 0.7, 0.12000000000000001}, {4, 9, 0.4, 0.1, 0.06}, {11, 17, 0.8, 0.1, 0.044}}, //possible rounding error?
 		},
-		{
-			name:  "Good period merge2",
-			input: []arrayIncident{{3, 5, 0.8, 0.7, 0.14}, {1, 4, 0.4, 0.1, 0.06}, {11, 15, 0.8, 0.1, 0.08}},
-			want:  []arrayIncident{{1, 4, 0.8, 0.7, 0.12000000000000001}, {4, 9, 0.4, 0.1, 0.06}, {11, 17, 0.8, 0.1, 0.044}}, //possible rounding error?
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
