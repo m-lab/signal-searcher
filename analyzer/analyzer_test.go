@@ -27,13 +27,19 @@ func Test_mergeArrayIncidents(t *testing.T) {
 		},
 		{
 			name:  "One is okay",
-			input: []arrayIncident{{1, 2, 0.3}},
-			want:  []arrayIncident{{1, 2, 0.3}},
+			input: []arrayIncident{{1, 2, 0.3, 0.2, 0.14}},
+			want:  []arrayIncident{{1, 2, 0.3, 0.2, 0.14}},
 		},
 		{
 			name:  "Merged unmerged merged",
-			input: []arrayIncident{{1, 3, 0.3}, {2, 4, 0.4}, {4, 9, 0.4}, {11, 15, 0.2}, {12, 16, 0.6}, {13, 17, 0.6}},
-			want:  []arrayIncident{{1, 4, 0.4}, {4, 9, 0.4}, {11, 17, 0.6}},
+			input: []arrayIncident{{1, 3, 0.3, 0.2, 0.14}, {2, 4, 0.5, 0.2, 0.14}, {4, 9, 0.4, 0.1, 0.06}, {11, 15, 0.8, 0.1, 0.08}, {12, 16, 0.6, 0.08, 0.032}, {13, 17, 0.6, 0.08, 0.032}},
+			want:  []arrayIncident{{1, 4, 0.5, 0.2, 0.14}, {4, 9, 0.4, 0.1, 0.06}, {11, 17, 0.8, 0.1, 0.044}},
+		},
+
+		{
+			name:  "Good period merge",
+			input: []arrayIncident{{1, 3, 0.8, 0.7, 0.14}, {2, 4, 0.5, 0.2, 0.10}, {4, 9, 0.4, 0.1, 0.06}, {11, 15, 0.8, 0.1, 0.08}, {12, 16, 0.6, 0.08, 0.032}, {13, 17, 0.6, 0.08, 0.032}},
+			want:  []arrayIncident{{1, 4, 0.8, 0.7, 0.12000000000000001}, {4, 9, 0.4, 0.1, 0.06}, {11, 17, 0.8, 0.1, 0.044}}, //possible rounding error?
 		},
 	}
 	for _, tt := range tests {
@@ -85,10 +91,12 @@ func TestFindPerformanceDrops(t *testing.T) {
 			name:  "One bad year",
 			input: &sequencer.Sequence{Seq: oneBadYear},
 			want: []Incident{{
-				Start:         time.Date(2011, 12, 1, 0, 0, 0, 0, time.UTC),
-				End:           time.Date(2012, 12, 1, 0, 0, 0, 0, time.UTC),
-				Severity:      1.0 - (badYearDownload / goodDownload),
-				AffectedCount: 12,
+				Start:              time.Date(2011, 12, 1, 0, 0, 0, 0, time.UTC),
+				End:                time.Date(2012, 12, 1, 0, 0, 0, 0, time.UTC),
+				Severity:           1.0 - (badYearDownload / goodDownload),
+				AffectedCount:      12,
+				GoodPeriodDownload: goodDownload,
+				BadPeriodDownload:  badYearDownload,
 			}},
 		},
 	}
